@@ -455,9 +455,15 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
         <div className="mt-5 rounded-xl border border-border p-4">
           <h3 className="text-sm font-medium">Add destination</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="block text-xs text-muted-foreground sm:col-span-2">Label (optional)
+            <label className="block text-xs text-muted-foreground">Link type (hub icon)
+              <select value={linkType} onChange={(e) => setLinkType(e.target.value as typeof linkType)}
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm capitalize">
+                {LINK_TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </label>
+            <label className="block text-xs text-muted-foreground">Label (optional)
               <input value={label} onChange={(e) => setLabel(e.target.value)}
-                placeholder="Variant A"
+                placeholder="Follow us on Instagram"
                 className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
             </label>
             <label className="block text-xs text-muted-foreground sm:col-span-2">URL
