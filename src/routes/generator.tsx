@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import QRCode from "qrcode";
-import { Download, Globe, MessageSquare, Phone, Mail, MapPin, CreditCard, Wifi, Type } from "lucide-react";
+import jsPDF from "jspdf";
+import { Download, Globe, MessageSquare, Phone, Mail, MapPin, CreditCard, Wifi, Type, Contact } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
