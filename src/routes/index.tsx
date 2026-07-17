@@ -47,52 +47,53 @@ const qrTypes = [
 
 function Landing() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <SiteHeader />
-
+      <main id="main">
       {/* Hero */}
-      <section className="relative bg-hero overflow-hidden">
+      <section className="relative bg-hero overflow-hidden" aria-labelledby="hero-title">
         <div className="absolute inset-0 grid-bg opacity-40" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-6 pt-20 pb-28 grid lg:grid-cols-2 gap-16 items-center">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-14 sm:pt-20 pb-20 sm:pb-28 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           <div>
             <span className="inline-flex items-center gap-2 text-xs font-medium px-3 h-7 rounded-full border border-border bg-card/60 backdrop-blur">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" aria-hidden />
               Unified QR Platform · v1.0
             </span>
-            <h1 className="mt-6 text-5xl md:text-6xl font-semibold leading-[1.05]">
+            <h1 id="hero-title" className="mt-6 text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05] tracking-tight">
               One QR code.<br />
               <span className="text-gradient">Infinite destinations.</span>
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground max-w-xl">
+            <p className="mt-5 sm:mt-6 text-base sm:text-lg text-muted-foreground max-w-xl">
               NxtQR is the enterprise-grade platform to generate, customize, and track static &
               dynamic QR codes — websites, payments, vCards, files and more.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-7 sm:mt-8 flex flex-wrap items-center gap-3">
               <Link
                 to="/generator"
-                className="inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-glow text-primary-foreground font-medium shadow-brand hover:opacity-90 transition"
+                className="inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-glow text-primary-foreground font-medium shadow-brand hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition"
               >
-                Generate a QR <ArrowRight className="w-4 h-4" />
+                Generate a QR <ArrowRight className="w-4 h-4" aria-hidden />
               </Link>
               <a
                 href="#features"
-                className="inline-flex items-center h-12 px-6 rounded-xl border border-border bg-card/40 backdrop-blur font-medium hover:bg-card transition"
+                className="inline-flex items-center h-12 px-6 rounded-xl border border-border bg-card/40 backdrop-blur font-medium hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition"
               >
                 Explore features
               </a>
             </div>
-            <div className="mt-10 flex items-center gap-6 text-xs text-muted-foreground">
-              <div><span className="text-foreground font-semibold">10M+</span> scans tracked</div>
-              <div className="w-px h-6 bg-border" />
-              <div><span className="text-foreground font-semibold">50K+</span> QRs generated</div>
-              <div className="w-px h-6 bg-border" />
-              <div><span className="text-foreground font-semibold">99.99%</span> uptime</div>
-            </div>
+            <dl className="mt-10 grid grid-cols-3 gap-4 sm:flex sm:items-center sm:gap-6 text-xs text-muted-foreground">
+              <div><dt className="sr-only">Scans tracked</dt><dd><span className="text-foreground font-semibold">10M+</span> scans tracked</dd></div>
+              <div className="hidden sm:block w-px h-6 bg-border" aria-hidden />
+              <div><dt className="sr-only">QRs generated</dt><dd><span className="text-foreground font-semibold">50K+</span> QRs generated</dd></div>
+              <div className="hidden sm:block w-px h-6 bg-border" aria-hidden />
+              <div><dt className="sr-only">Uptime</dt><dd><span className="text-foreground font-semibold">99.99%</span> uptime</dd></div>
+            </dl>
           </div>
 
           <QrPreview />
         </div>
       </section>
+
 
       {/* Features */}
       <section id="features" className="mx-auto max-w-7xl px-6 py-24">
