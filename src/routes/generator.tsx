@@ -12,9 +12,9 @@ import { createQr } from "@/lib/qr.functions";
 export const Route = createFileRoute("/generator")({
   head: () => ({
     meta: [
-      { title: "QR Generator — NxtQR" },
+      { title: "QR Generator — UniQR" },
       { name: "description", content: "Free QR code generator. Create Website, WhatsApp, UPI, WiFi, vCard and more with full customization." },
-      { property: "og:title", content: "QR Generator — NxtQR" },
+      { property: "og:title", content: "QR Generator — UniQR" },
       { property: "og:description", content: "Generate customizable QR codes in seconds." },
     ],
   }),
@@ -39,7 +39,7 @@ const types: { key: QRType; label: string; icon: React.ComponentType<{ className
 function Generator() {
   const [mode, setMode] = useState<"static" | "dynamic">("static");
   const [type, setType] = useState<QRType>("url");
-  const [fields, setFields] = useState<Record<string, string>>({ url: "https://nxtqr.app" });
+  const [fields, setFields] = useState<Record<string, string>>({ url: "https://uniqr.app" });
   const [fg, setFg] = useState("#0b0b12");
   const [bg, setBg] = useState("#ffffff");
   const [size, setSize] = useState(280);
@@ -117,7 +117,7 @@ function Generator() {
     const pageW = doc.internal.pageSize.getWidth();
     const qrSize = 320;
     doc.setFontSize(18);
-    doc.text("NxtQR — QR Code", pageW / 2, 60, { align: "center" });
+    doc.text("UniQR — QR Code", pageW / 2, 60, { align: "center" });
     doc.addImage(dataUrl, "PNG", (pageW - qrSize) / 2, 100, qrSize, qrSize);
     doc.setFontSize(10);
     doc.setTextColor(120);
@@ -351,7 +351,7 @@ function FieldsFor({ type, fields, onChange }: { type: QRType; fields: Record<st
     case "email":
       return (
         <div className="grid gap-4">
-          <Input label="Email" value={fields.email} onChange={(v) => onChange("email", v)} placeholder="hello@nxtqr.app" />
+          <Input label="Email" value={fields.email} onChange={(v) => onChange("email", v)} placeholder="hello@uniqr.app" />
           <Input label="Subject" value={fields.subject} onChange={(v) => onChange("subject", v)} />
           <Input label="Body" value={fields.body} onChange={(v) => onChange("body", v)} />
         </div>
@@ -413,15 +413,15 @@ function FieldsFor({ type, fields, onChange }: { type: QRType; fields: Record<st
 
 function defaultsFor(t: QRType): Record<string, string> {
   switch (t) {
-    case "url": return { url: "https://nxtqr.app" };
-    case "text": return { text: "Hello from NxtQR" };
-    case "vcard": return { fn: "Ada", ln: "Lovelace", org: "NxtQR", title: "Founder", tel: "+919999999999", email: "ada@nxtqr.app", url: "https://nxtqr.app", adr: "" };
+    case "url": return { url: "https://uniqr.app" };
+    case "text": return { text: "Hello from UniQR" };
+    case "vcard": return { fn: "Ada", ln: "Lovelace", org: "UniQR", title: "Founder", tel: "+919999999999", email: "ada@uniqr.app", url: "https://uniqr.app", adr: "" };
     case "whatsapp": return { phone: "919999999999", msg: "Hi!" };
     case "phone": return { phone: "+919999999999" };
-    case "email": return { email: "hello@nxtqr.app", subject: "", body: "" };
+    case "email": return { email: "hello@uniqr.app", subject: "", body: "" };
     case "sms": return { phone: "+919999999999", msg: "" };
     case "maps": return { lat: "12.9716", lng: "77.5946" };
-    case "upi": return { pa: "demo@upi", pn: "NxtQR", am: "", tn: "" };
+    case "upi": return { pa: "demo@upi", pn: "UniQR", am: "", tn: "" };
     case "wifi": return { ssid: "MyWiFi", password: "", enc: "WPA" };
   }
 }

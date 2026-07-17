@@ -2,10 +2,10 @@ import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 const presets = [
-  { label: "Website", value: "https://nxtqr.app" },
+  { label: "Website", value: "https://uniqr.app" },
   { label: "WhatsApp", value: "https://wa.me/919999999999" },
-  { label: "UPI", value: "upi://pay?pa=demo@upi&pn=NxtQR&am=100" },
-  { label: "vCard", value: "BEGIN:VCARD\nVERSION:3.0\nFN:Alex Doe\nORG:NxtQR\nTEL:+911234567890\nEMAIL:alex@nxtqr.app\nEND:VCARD" },
+  { label: "UPI", value: "upi://pay?pa=demo@upi&pn=UniQR&am=100" },
+  { label: "vCard", value: "BEGIN:VCARD\nVERSION:3.0\nFN:Alex Doe\nORG:UniQR\nTEL:+911234567890\nEMAIL:alex@uniqr.app\nEND:VCARD" },
 ];
 
 export function QrPreview() {

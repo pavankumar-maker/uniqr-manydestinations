@@ -6,7 +6,7 @@ export const Route = createFileRoute("/s")({
   component: StaticHub,
   head: () => ({
     meta: [
-      { title: "Links — NxtQR" },
+      { title: "Links — UniQR" },
       { name: "description", content: "A static multi-link hub encoded in a QR code." },
       { name: "robots", content: "noindex" },
     ],
@@ -90,7 +90,7 @@ function StaticHub() {
             </li>
           ))}
         </ul>
-        <p className="text-[11px] text-center text-muted-foreground mt-6">Powered by NxtQR · Static multi-link</p>
+        <p className="text-[11px] text-center text-muted-foreground mt-6">Powered by UniQR · Static multi-link</p>
       </div>
     </main>
   );

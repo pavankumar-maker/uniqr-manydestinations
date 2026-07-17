@@ -11,9 +11,9 @@ import { QrPreview } from "@/components/qr-preview";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "NxtQR — Unified QR Platform for Enterprises" },
+      { title: "UniQR — Unified QR Platform for Enterprises" },
       { name: "description", content: "Generate, customize, and track static & dynamic QR codes. Multi-link QR, digital business cards, analytics, and enterprise-grade security." },
-      { property: "og:title", content: "NxtQR — Unified QR Platform for Enterprises" },
+      { property: "og:title", content: "UniQR — Unified QR Platform for Enterprises" },
       { property: "og:description", content: "Generate, customize, and track static & dynamic QR codes. Multi-link QR, digital business cards, analytics, and enterprise-grade security." },
     ],
   }),
@@ -64,7 +64,7 @@ function Landing() {
               <span className="text-gradient">Infinite destinations.</span>
             </h1>
             <p className="mt-5 sm:mt-6 text-base sm:text-lg text-muted-foreground max-w-xl">
-              NxtQR is the enterprise-grade platform to generate, customize, and track static &
+              UniQR is the enterprise-grade platform to generate, customize, and track static &
               dynamic QR codes — websites, payments, vCards, files and more.
             </p>
             <div className="mt-7 sm:mt-8 flex flex-wrap items-center gap-3">
@@ -159,7 +159,7 @@ function Landing() {
         <div className="rounded-3xl border border-border bg-card p-10 md:p-14">
           <div className="text-accent text-sm font-medium">Customer story</div>
           <p className="mt-4 text-2xl md:text-3xl font-display leading-snug max-w-4xl">
-            "NxtQR replaced three tools for us. Our marketing team ships branded, trackable QR
+            "UniQR replaced three tools for us. Our marketing team ships branded, trackable QR
             campaigns in minutes — not days. The analytics alone paid for the platform."
           </p>
           <div className="mt-8 flex items-center gap-4">
