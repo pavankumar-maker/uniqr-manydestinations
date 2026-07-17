@@ -1,11 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
-import { Download, Globe, MessageSquare, Phone, Mail, MapPin, CreditCard, Wifi, Type, Contact } from "lucide-react";
+import { Download, Globe, MessageSquare, Phone, Mail, MapPin, CreditCard, Wifi, Type, Contact, Zap, Copy, Check } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { supabase } from "@/integrations/supabase/client";
+import { createQr } from "@/lib/qr.functions";
 
 export const Route = createFileRoute("/generator")({
   head: () => ({
@@ -35,15 +37,35 @@ const types: { key: QRType; label: string; icon: React.ComponentType<{ className
 ];
 
 function Generator() {
+  const [mode, setMode] = useState<"static" | "dynamic">("static");
   const [type, setType] = useState<QRType>("url");
   const [fields, setFields] = useState<Record<string, string>>({ url: "https://nxtqr.app" });
   const [fg, setFg] = useState("#0b0b12");
   const [bg, setBg] = useState("#ffffff");
   const [size, setSize] = useState(280);
   const [level, setLevel] = useState<"L" | "M" | "Q" | "H">("H");
+  const [name, setName] = useState("My QR");
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [shortUrl, setShortUrl] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   const svgWrapRef = useRef<HTMLDivElement>(null);
 
-  const value = useMemo(() => buildValue(type, fields), [type, fields]);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSignedIn(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const rawValue = useMemo(() => buildValue(type, fields), [type, fields]);
+  const value = mode === "dynamic" && shortUrl ? shortUrl : rawValue;
+
+  // Dynamic mode only supports http(s) targets (real URLs)
+  const isHttp = /^https?:\/\//i.test(rawValue);
+  const canDynamic = isHttp;
+
+  useEffect(() => { setShortUrl(null); setErr(null); }, [rawValue, mode]);
 
   function update(k: string, v: string) {
     setFields((f) => ({ ...f, [k]: v }));
@@ -52,7 +74,31 @@ function Generator() {
   function switchType(t: QRType) {
     setType(t);
     setFields(defaultsFor(t));
+    setShortUrl(null);
   }
+
+  async function createDynamic() {
+    setErr(null);
+    if (!canDynamic) { setErr("Dynamic QR requires an https:// URL target."); return; }
+    setCreating(true);
+    try {
+      const row = await createQr({ data: { name: name || "My QR", target_url: rawValue, fg_color: fg, bg_color: bg } });
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      setShortUrl(`${origin}/r/${(row as { short_id: string }).short_id}`);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to create dynamic QR");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function copyShort() {
+    if (!shortUrl) return;
+    await navigator.clipboard.writeText(shortUrl);
+    setCopied(true); setTimeout(() => setCopied(false), 1500);
+  }
+
+
 
   async function downloadPNG() {
     const dataUrl = await QRCode.toDataURL(value || " ", {
@@ -103,6 +149,30 @@ function Generator() {
       <section className="mx-auto max-w-7xl px-6 py-12 grid lg:grid-cols-[1fr_420px] gap-8">
         {/* Left */}
         <div className="space-y-8">
+          {/* Mode toggle */}
+          <div>
+            <div className="text-sm font-medium mb-3">QR Mode</div>
+            <div className="inline-flex p-1 rounded-xl border border-border bg-card/60">
+              <button
+                onClick={() => setMode("static")}
+                className={`px-4 h-9 rounded-lg text-sm transition ${mode === "static" ? "bg-glow text-primary-foreground shadow-brand" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Static
+              </button>
+              <button
+                onClick={() => setMode("dynamic")}
+                className={`px-4 h-9 rounded-lg text-sm inline-flex items-center gap-1.5 transition ${mode === "dynamic" ? "bg-glow text-primary-foreground shadow-brand" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <Zap className="w-3.5 h-3.5" /> Dynamic
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {mode === "static"
+                ? "Encodes content directly into the QR. Works offline, cannot be edited or tracked."
+                : "Encodes a short link that redirects to your target. Editable anytime, with scan analytics."}
+            </p>
+          </div>
+
           {/* Type selector */}
           <div>
             <div className="text-sm font-medium mb-3">QR Type</div>
@@ -161,6 +231,53 @@ function Generator() {
             <div className="mt-3 text-xs font-mono text-muted-foreground truncate">
               {value.split("\n")[0] || "—"}
             </div>
+
+            {mode === "dynamic" && (
+              <div className="mt-5 rounded-xl border border-border bg-background/50 p-4 space-y-3">
+                {!shortUrl ? (
+                  <>
+                    <div>
+                      <label className="text-xs text-muted-foreground">QR name</label>
+                      <input value={name} onChange={(e) => setName(e.target.value)}
+                        className="mt-1 w-full h-10 px-3 rounded-lg bg-input border border-border text-sm"
+                        placeholder="Campaign / label" />
+                    </div>
+                    {signedIn === false ? (
+                      <Link to="/auth"
+                        className="inline-flex w-full items-center justify-center h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand">
+                        Sign in to create dynamic QR
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={createDynamic}
+                        disabled={!canDynamic || creating || signedIn === null}
+                        className="inline-flex w-full items-center justify-center gap-1.5 h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-50"
+                      >
+                        <Zap className="w-4 h-4" /> {creating ? "Creating…" : "Create dynamic QR"}
+                      </button>
+                    )}
+                    {!canDynamic && (
+                      <p className="text-xs text-muted-foreground">Dynamic QR requires an https:// target. This content type isn't a URL.</p>
+                    )}
+                    {err && <p className="text-xs text-destructive">{err}</p>}
+                  </>
+                ) : (
+                  <>
+                    <div className="text-xs text-muted-foreground">Short link (editable in Dashboard)</div>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 truncate text-xs bg-input border border-border rounded-lg px-3 h-10 inline-flex items-center">{shortUrl}</code>
+                      <button onClick={copyShort}
+                        className="h-10 w-10 grid place-items-center rounded-lg border border-border hover:bg-secondary">
+                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <Link to="/dashboard" className="text-xs text-primary underline">Manage in Dashboard →</Link>
+                  </>
+                )}
+              </div>
+            )}
+
+
             <div className="mt-5 grid grid-cols-3 gap-2">
               <button onClick={downloadPNG}
                 className="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand hover:opacity-90 transition">
