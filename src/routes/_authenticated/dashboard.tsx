@@ -1232,7 +1232,7 @@ function StaticQrModal({ onClose }: { onClose: () => void }) {
   const [links, setLinks] = useState({
     title: "",
     subtitle: "",
-    items: [{ label: "Website", url: "https://", type: "website" }] as LinkItem[],
+    items: [{ label: "Website", url: "", type: "website" }] as LinkItem[],
   });
 
   const value = useMemo(() => {
@@ -1566,7 +1566,7 @@ function StaticQrModal({ onClose }: { onClose: () => void }) {
                   })}
                   <button
                     type="button"
-                    onClick={() => setLinks({ ...links, items: [...links.items, { label: "", url: "https://", type: "website" }] })}
+                    onClick={() => setLinks({ ...links, items: [...links.items, { label: "", url: "", type: "website" }] })}
                     className="h-9 px-3 rounded-lg border border-border text-xs hover:bg-accent"
                   >
                     + Add link
