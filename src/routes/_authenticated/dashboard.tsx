@@ -35,9 +35,13 @@ function Dashboard() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [statsFor, setStatsFor] = useState<Qr | null>(null);
   const [destsFor, setDestsFor] = useState<Qr | null>(null);
   const [email, setEmail] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "link" | "file">("all");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
