@@ -10,8 +10,9 @@ function makeShortId() {
   return s;
 }
 
-const ROUTING_MODES = ["single", "rotation", "weighted", "device", "priority"] as const;
+const ROUTING_MODES = ["single", "rotation", "weighted", "device", "priority", "hub"] as const;
 const DEVICE_FILTERS = ["any", "mobile", "tablet", "desktop"] as const;
+const LINK_TYPES = ["link", "website", "whatsapp", "facebook", "instagram", "twitter", "youtube", "linkedin", "tiktok", "telegram", "email", "phone", "maps", "upi", "file"] as const;
 
 const createSchema = z.object({
   name: z.string().min(1).max(80),
