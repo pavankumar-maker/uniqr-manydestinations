@@ -121,6 +121,61 @@ function Landing() {
         </div>
       </section>
 
+      {/* Trusted by */}
+      <section className="border-y border-border/60 bg-card/20">
+        <div className="mx-auto max-w-7xl px-6 py-10">
+          <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground text-center">
+            Trusted by fast-moving teams worldwide
+          </div>
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 items-center">
+            {["Northwind", "Vertex Labs", "Kairo", "Lumen", "Helix", "Orbita"].map((n) => (
+              <div key={n} className="text-center font-display text-lg text-muted-foreground/70 tracking-wide">
+                {n}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="mx-auto max-w-7xl px-6 py-24">
+        <div className="max-w-2xl">
+          <div className="text-sm font-medium text-accent">How it works</div>
+          <h2 className="mt-3 text-4xl font-semibold">Launch a live QR in three steps</h2>
+        </div>
+        <div className="mt-14 grid md:grid-cols-3 gap-5">
+          {[
+            { step: "01", title: "Choose a type", desc: "Pick from 12+ QR types — URL, UPI, WiFi, vCard, WhatsApp and more." },
+            { step: "02", title: "Design & customize", desc: "Match your brand with colors, logo, frames and error-correction levels." },
+            { step: "03", title: "Deploy & track", desc: "Download in PNG/SVG/PDF and monitor every scan in real time." },
+          ].map((s) => (
+            <div key={s.step} className="relative rounded-2xl border border-border bg-card p-8">
+              <div className="font-display text-5xl text-gradient font-semibold">{s.step}</div>
+              <h3 className="mt-6 text-lg font-semibold">{s.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Testimonial */}
+      <section className="mx-auto max-w-7xl px-6 pb-8">
+        <div className="rounded-3xl border border-border bg-card p-10 md:p-14">
+          <div className="text-accent text-sm font-medium">Customer story</div>
+          <p className="mt-4 text-2xl md:text-3xl font-display leading-snug max-w-4xl">
+            "NxtQR replaced three tools for us. Our marketing team ships branded, trackable QR
+            campaigns in minutes — not days. The analytics alone paid for the platform."
+          </p>
+          <div className="mt-8 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-glow" />
+            <div>
+              <div className="text-sm font-medium">Priya Menon</div>
+              <div className="text-xs text-muted-foreground">Head of Growth, Vertex Labs</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* QR Types */}
       <section id="types" className="border-y border-border/60 bg-card/30">
         <div className="mx-auto max-w-7xl px-6 py-24">
