@@ -161,14 +161,18 @@ function Generator() {
             <div className="mt-3 text-xs font-mono text-muted-foreground truncate">
               {value.split("\n")[0] || "—"}
             </div>
-            <div className="mt-5 grid grid-cols-2 gap-2">
+            <div className="mt-5 grid grid-cols-3 gap-2">
               <button onClick={downloadPNG}
-                className="inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-glow text-primary-foreground font-medium shadow-brand hover:opacity-90 transition">
+                className="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand hover:opacity-90 transition">
                 <Download className="w-4 h-4" /> PNG
               </button>
               <button onClick={downloadSVG}
-                className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border hover:bg-secondary transition">
+                className="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl border border-border text-sm hover:bg-secondary transition">
                 <Download className="w-4 h-4" /> SVG
+              </button>
+              <button onClick={downloadPDF}
+                className="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl border border-border text-sm hover:bg-secondary transition">
+                <Download className="w-4 h-4" /> PDF
               </button>
             </div>
           </div>
