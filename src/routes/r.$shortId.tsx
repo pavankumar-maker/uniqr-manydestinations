@@ -47,25 +47,32 @@ const META: Record<string, LinkMeta> = {
 };
 
 // Curated cover imagery — free-to-use Unsplash photos, deterministic per hub
-const COVERS = [
-  "https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1614851099511-773084f6911d?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-];
-
 function hash(s: string) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
   return Math.abs(h);
 }
 
+// Curated gradient palettes — deterministic per hub, always render, no network needed
+const GRADIENTS = [
+  ["#667eea", "#764ba2", "#f093fb"],
+  ["#00c6fb", "#005bea", "#3b82f6"],
+  ["#f093fb", "#f5576c", "#ff9a44"],
+  ["#4facfe", "#00f2fe", "#43e97b"],
+  ["#fa709a", "#fee140", "#ff9a9e"],
+  ["#30cfd0", "#330867", "#5b247a"],
+  ["#ff6a00", "#ee0979", "#8e2de2"],
+  ["#a1c4fd", "#c2e9fb", "#667eea"],
+];
+
 function HubOrFallback() {
   const { hub, notFound } = Route.useLoaderData();
   if (notFound || !hub) return <NotFoundPage />;
 
-  const cover = COVERS[hash(hub.name) % COVERS.length];
+  const g = GRADIENTS[hash(hub.name) % GRADIENTS.length];
+  const cover = `radial-gradient(circle at 20% 20%, ${g[0]} 0%, transparent 50%),
+                 radial-gradient(circle at 80% 30%, ${g[2]} 0%, transparent 55%),
+                 linear-gradient(135deg, ${g[1]} 0%, ${g[0]} 100%)`;
   const initials = hub.name.split(/\s+/).slice(0, 2).map((w: string) => w[0]?.toUpperCase()).join("") || "N";
 
   const share = async () => {
@@ -76,38 +83,35 @@ function HubOrFallback() {
   };
 
   return (
-    <div className="min-h-dvh relative overflow-hidden" style={{ backgroundColor: hub.bg }}>
-      {/* Ambient background */}
+    <div className="min-h-dvh relative overflow-hidden bg-slate-50">
+      {/* Ambient wash */}
       <div
-        className="absolute inset-0 opacity-30 blur-3xl pointer-events-none"
-        style={{
-          background: `radial-gradient(600px circle at 20% 0%, ${hub.fg}22, transparent 60%),
-                       radial-gradient(500px circle at 80% 100%, ${hub.fg}22, transparent 60%)`,
-        }}
+        className="absolute inset-x-0 top-0 h-80 opacity-40 blur-3xl pointer-events-none"
+        style={{ background: cover }}
       />
 
       <div className="relative max-w-md mx-auto px-4 pb-16">
-        {/* Cover */}
-        <div className="relative mt-4 h-40 rounded-3xl overflow-hidden shadow-xl ring-1 ring-black/10">
-          <img src={cover} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/60" />
+        {/* Cover banner */}
+        <div className="relative mt-4 h-44 rounded-3xl overflow-hidden shadow-xl ring-1 ring-black/5">
+          <div className="absolute inset-0" style={{ background: cover }} />
+          {/* Decorative shapes */}
+          <div className="absolute -top-10 -right-8 w-40 h-40 rounded-full bg-white/10 backdrop-blur-sm" />
+          <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-white/10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/25" />
           <button
             onClick={share}
             aria-label="Share"
-            className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full bg-white/90 backdrop-blur hover:bg-white text-slate-900 shadow-md"
+            className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full bg-white/95 hover:bg-white text-slate-900 shadow-md transition"
           >
             <Share2 className="w-4 h-4" />
           </button>
         </div>
 
         {/* Avatar */}
-        <div className="-mt-12 flex justify-center">
+        <div className="-mt-14 flex justify-center">
           <div
-            className="w-24 h-24 rounded-3xl grid place-items-center text-3xl font-bold shadow-2xl ring-4 ring-white/90"
-            style={{
-              background: `linear-gradient(135deg, ${hub.fg}, ${hub.fg}cc)`,
-              color: hub.bg,
-            }}
+            className="w-24 h-24 rounded-3xl grid place-items-center text-3xl font-bold text-white shadow-2xl ring-4 ring-white"
+            style={{ background: `linear-gradient(135deg, ${g[0]}, ${g[1]})` }}
           >
             {initials}
           </div>
@@ -116,22 +120,16 @@ function HubOrFallback() {
         {/* Identity */}
         <div className="mt-4 text-center">
           <div className="flex items-center justify-center gap-1.5">
-            <h1 className="text-2xl font-semibold tracking-tight" style={{ color: hub.fg }}>
-              {hub.name}
-            </h1>
-            <BadgeCheck className="w-5 h-5" style={{ color: hub.fg }} />
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{hub.name}</h1>
+            <BadgeCheck className="w-5 h-5 text-sky-500" />
           </div>
-          <p className="mt-1 text-sm opacity-70" style={{ color: hub.fg }}>
-            Tap a link below to connect
-          </p>
+          <p className="mt-1 text-sm text-slate-500">Tap a link below to connect</p>
         </div>
 
         {/* Links */}
         <div className="mt-8 space-y-3">
           {hub.links.length === 0 && (
-            <p className="text-center text-sm opacity-60" style={{ color: hub.fg }}>
-              No links yet.
-            </p>
+            <p className="text-center text-sm text-slate-500">No links yet.</p>
           )}
           {hub.links.map((l: { label: string; url: string; type: string }, i: number) => {
             const meta = META[l.type] ?? META.link;
@@ -142,7 +140,7 @@ function HubOrFallback() {
                 href={l.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative flex items-center gap-4 w-full pl-2 pr-4 py-2 rounded-2xl bg-white/95 hover:bg-white shadow-sm hover:shadow-lg ring-1 ring-black/5 transition-all hover:-translate-y-0.5"
+                className="group relative flex items-center gap-4 w-full pl-2 pr-4 py-2 rounded-2xl bg-white hover:bg-white shadow-sm hover:shadow-lg ring-1 ring-slate-200 hover:ring-slate-300 transition-all hover:-translate-y-0.5"
               >
                 <span
                   className={`w-12 h-12 shrink-0 rounded-xl grid place-items-center text-white shadow-md bg-gradient-to-br ${meta.grad}`}
@@ -162,9 +160,9 @@ function HubOrFallback() {
         </div>
 
         {/* Footer */}
-        <div className="mt-10 flex items-center justify-center gap-2 text-xs opacity-60" style={{ color: hub.fg }}>
-          <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: hub.fg }} />
-          Powered by <span className="font-semibold">NxtQR</span>
+        <div className="mt-10 flex items-center justify-center gap-2 text-xs text-slate-400">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400" />
+          Powered by <span className="font-semibold text-slate-600">NxtQR</span>
         </div>
       </div>
     </div>
