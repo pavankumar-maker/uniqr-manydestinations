@@ -14,7 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      qr_codes: {
+        Row: {
+          bg_color: string
+          created_at: string
+          fg_color: string
+          id: string
+          is_active: boolean
+          is_dynamic: boolean
+          name: string
+          scan_count: number
+          short_id: string
+          target_url: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bg_color?: string
+          created_at?: string
+          fg_color?: string
+          id?: string
+          is_active?: boolean
+          is_dynamic?: boolean
+          name: string
+          scan_count?: number
+          short_id: string
+          target_url: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bg_color?: string
+          created_at?: string
+          fg_color?: string
+          id?: string
+          is_active?: boolean
+          is_dynamic?: boolean
+          name?: string
+          scan_count?: number
+          short_id?: string
+          target_url?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scan_events: {
+        Row: {
+          country: string | null
+          device: string | null
+          id: number
+          qr_id: string
+          referrer: string | null
+          scanned_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          country?: string | null
+          device?: string | null
+          id?: number
+          qr_id: string
+          referrer?: string | null
+          scanned_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          country?: string | null
+          device?: string | null
+          id?: number
+          qr_id?: string
+          referrer?: string | null
+          scanned_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_events_qr_id_fkey"
+            columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
