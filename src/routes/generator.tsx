@@ -37,15 +37,35 @@ const types: { key: QRType; label: string; icon: React.ComponentType<{ className
 ];
 
 function Generator() {
+  const [mode, setMode] = useState<"static" | "dynamic">("static");
   const [type, setType] = useState<QRType>("url");
   const [fields, setFields] = useState<Record<string, string>>({ url: "https://nxtqr.app" });
   const [fg, setFg] = useState("#0b0b12");
   const [bg, setBg] = useState("#ffffff");
   const [size, setSize] = useState(280);
   const [level, setLevel] = useState<"L" | "M" | "Q" | "H">("H");
+  const [name, setName] = useState("My QR");
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [shortUrl, setShortUrl] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   const svgWrapRef = useRef<HTMLDivElement>(null);
 
-  const value = useMemo(() => buildValue(type, fields), [type, fields]);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSignedIn(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const rawValue = useMemo(() => buildValue(type, fields), [type, fields]);
+  const value = mode === "dynamic" && shortUrl ? shortUrl : rawValue;
+
+  // Dynamic mode only supports http(s) targets (real URLs)
+  const isHttp = /^https?:\/\//i.test(rawValue);
+  const canDynamic = isHttp;
+
+  useEffect(() => { setShortUrl(null); setErr(null); }, [rawValue, mode]);
 
   function update(k: string, v: string) {
     setFields((f) => ({ ...f, [k]: v }));
@@ -54,7 +74,31 @@ function Generator() {
   function switchType(t: QRType) {
     setType(t);
     setFields(defaultsFor(t));
+    setShortUrl(null);
   }
+
+  async function createDynamic() {
+    setErr(null);
+    if (!canDynamic) { setErr("Dynamic QR requires an https:// URL target."); return; }
+    setCreating(true);
+    try {
+      const row = await createQr({ data: { name: name || "My QR", target_url: rawValue, fg_color: fg, bg_color: bg } });
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      setShortUrl(`${origin}/r/${(row as { short_id: string }).short_id}`);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to create dynamic QR");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function copyShort() {
+    if (!shortUrl) return;
+    await navigator.clipboard.writeText(shortUrl);
+    setCopied(true); setTimeout(() => setCopied(false), 1500);
+  }
+
+
 
   async function downloadPNG() {
     const dataUrl = await QRCode.toDataURL(value || " ", {
