@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SRouteImport } from './routes/s'
 import { Route as GeneratorRouteImport } from './routes/generator'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -18,6 +19,11 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as ApiPublicFileSplatRouteImport } from './routes/api/public/file/$'
 
+const SRoute = SRouteImport.update({
+  id: '/s',
+  path: '/s',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GeneratorRoute = GeneratorRouteImport.update({
   id: '/generator',
   path: '/generator',
@@ -62,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/generator': typeof GeneratorRoute
+  '/s': typeof SRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/r/$shortId': typeof RShortIdRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/generator': typeof GeneratorRoute
+  '/s': typeof SRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/r/$shortId': typeof RShortIdRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/generator': typeof GeneratorRoute
+  '/s': typeof SRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/r/$shortId': typeof RShortIdRoute
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/generator'
+    | '/s'
     | '/dashboard'
     | '/profile'
     | '/r/$shortId'
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/generator'
+    | '/s'
     | '/dashboard'
     | '/profile'
     | '/r/$shortId'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/generator'
+    | '/s'
     | '/_authenticated/dashboard'
     | '/_authenticated/profile'
     | '/r/$shortId'
@@ -123,12 +135,20 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   GeneratorRoute: typeof GeneratorRoute
+  SRoute: typeof SRoute
   RShortIdRoute: typeof RShortIdRoute
   ApiPublicFileSplatRoute: typeof ApiPublicFileSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/s': {
+      id: '/s'
+      path: '/s'
+      fullPath: '/s'
+      preLoaderRoute: typeof SRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/generator': {
       id: '/generator'
       path: '/generator'
@@ -206,6 +226,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   GeneratorRoute: GeneratorRoute,
+  SRoute: SRoute,
   RShortIdRoute: RShortIdRoute,
   ApiPublicFileSplatRoute: ApiPublicFileSplatRoute,
 }
