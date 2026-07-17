@@ -252,19 +252,20 @@ function Dashboard() {
                     ))}
                   </select>
 
-                  <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="mt-3 grid grid-cols-3 gap-2">
                     <button
                       onClick={() => setDestsFor(q)}
                       className="inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-xs hover:bg-accent"
                     >
-                      <RouteIcon className="w-3.5 h-3.5" /> Destinations
+                      <RouteIcon className="w-3.5 h-3.5" /> Routes
                     </button>
                     <button
                       onClick={() => setStatsFor(q)}
                       className="inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-xs hover:bg-accent"
                     >
-                      <BarChart3 className="w-3.5 h-3.5" /> Analytics
+                      <BarChart3 className="w-3.5 h-3.5" /> Stats
                     </button>
+                    <DownloadMenu qr={q} shortUrl={shortUrl} />
                   </div>
 
                   <div className="mt-2 flex items-center gap-2">
