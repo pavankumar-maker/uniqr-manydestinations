@@ -215,7 +215,9 @@ function Landing() {
         </div>
       </section>
 
+      </main>
       <SiteFooter />
     </div>
   );
 }
+
