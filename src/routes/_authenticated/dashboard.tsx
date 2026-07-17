@@ -1076,7 +1076,9 @@ function LocateButton({ onLocate }: { onLocate: (v: string) => void }) {
         } catch { /* fall through */ }
         onLocate(coords);
         toast.success("Location coordinates filled");
+        setLoading(false);
       },
+
       (err) => {
         toast.error(err.code === err.PERMISSION_DENIED ? "Location permission denied" : "Couldn't get location");
         setLoading(false);
