@@ -67,23 +67,37 @@ function ensureHttps(v: string) {
 function isValidUrl(v: string) { try { new URL(v); return true; } catch { return false; } }
 function stripAt(v: string) { return v.trim().replace(/^@+/, ""); }
 
-function buildUrl(type: LinkType, raw: string): string | null {
+type Extras = { message?: string; subject?: string; body?: string; amount?: string; note?: string };
+
+function buildUrl(type: LinkType, raw: string, extras: Extras = {}): string | null {
   const v = raw.trim();
   if (!v) return null;
   switch (type) {
     case "whatsapp": {
       const d = digits(v);
-      return d.length >= 6 ? `https://wa.me/${d}` : null;
+      if (d.length < 6) return null;
+      const msg = extras.message?.trim();
+      return `https://wa.me/${d}${msg ? `?text=${encodeURIComponent(msg)}` : ""}`;
     }
     case "phone": {
       const d = digits(v);
       return d.length >= 4 ? `tel:${v.startsWith("+") ? "+" : ""}${d}` : null;
     }
     case "email": {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? `mailto:${v}` : null;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return null;
+      const params = new URLSearchParams();
+      if (extras.subject?.trim()) params.set("subject", extras.subject.trim());
+      if (extras.body?.trim()) params.set("body", extras.body.trim());
+      const q = params.toString();
+      return `mailto:${v}${q ? `?${q}` : ""}`;
     }
     case "upi": {
-      return /^[\w.\-]+@[\w.\-]+$/.test(v) ? `upi://pay?pa=${encodeURIComponent(v)}` : null;
+      if (!/^[\w.\-]+@[\w.\-]+$/.test(v)) return null;
+      const params = new URLSearchParams({ pa: v });
+      if (extras.note?.trim()) params.set("tn", extras.note.trim());
+      if (extras.amount?.trim() && !isNaN(Number(extras.amount))) params.set("am", extras.amount.trim());
+      params.set("cu", "INR");
+      return `upi://pay?${params.toString()}`;
     }
     case "instagram": {
       if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
@@ -115,6 +129,7 @@ function buildUrl(type: LinkType, raw: string): string | null {
     }
   }
 }
+
 
 
 function Dashboard() {
