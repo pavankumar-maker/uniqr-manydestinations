@@ -589,11 +589,15 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
                 inputMode={meta.inputMode}
                 placeholder={meta.placeholder}
                 className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+              {linkType === "maps" && (
+                <LocateButton onLocate={(v) => setUrl(v)} />
+              )}
               {meta.help && <span className="mt-1 block text-[11px] text-muted-foreground">{meta.help}</span>}
               {url && !canAdd && (
                 <span className="mt-1 block text-[11px] text-destructive">Enter a valid {meta.label.toLowerCase()}.</span>
               )}
             </label>
+
 
             {/* Type-specific extras */}
             {linkType === "whatsapp" && (
