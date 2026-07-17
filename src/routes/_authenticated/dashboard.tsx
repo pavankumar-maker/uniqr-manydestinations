@@ -88,6 +88,12 @@ function Dashboard() {
           </Link>
           <div className="flex items-center gap-3">
             <span className="hidden sm:inline text-sm text-muted-foreground">{email}</span>
+            <Link
+              to="/profile"
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-sm hover:bg-accent transition"
+            >
+              Profile
+            </Link>
             <button
               onClick={signOut}
               className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-sm hover:bg-accent transition"
