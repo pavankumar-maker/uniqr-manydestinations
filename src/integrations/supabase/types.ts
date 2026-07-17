@@ -37,6 +37,9 @@ export type Database = {
           bg_color: string
           created_at: string
           fg_color: string
+          file_mime: string | null
+          file_name: string | null
+          file_path: string | null
           id: string
           is_active: boolean
           is_dynamic: boolean
@@ -45,7 +48,7 @@ export type Database = {
           routing_mode: string
           scan_count: number
           short_id: string
-          target_url: string
+          target_url: string | null
           updated_at: string
           user_id: string
         }
@@ -53,6 +56,9 @@ export type Database = {
           bg_color?: string
           created_at?: string
           fg_color?: string
+          file_mime?: string | null
+          file_name?: string | null
+          file_path?: string | null
           id?: string
           is_active?: boolean
           is_dynamic?: boolean
@@ -61,7 +67,7 @@ export type Database = {
           routing_mode?: string
           scan_count?: number
           short_id: string
-          target_url: string
+          target_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -69,6 +75,9 @@ export type Database = {
           bg_color?: string
           created_at?: string
           fg_color?: string
+          file_mime?: string | null
+          file_name?: string | null
+          file_path?: string | null
           id?: string
           is_active?: boolean
           is_dynamic?: boolean
@@ -77,7 +86,7 @@ export type Database = {
           routing_mode?: string
           scan_count?: number
           short_id?: string
-          target_url?: string
+          target_url?: string | null
           updated_at?: string
           user_id?: string
         }
