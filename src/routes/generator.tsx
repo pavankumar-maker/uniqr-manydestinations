@@ -62,6 +62,24 @@ function Generator() {
     triggerDownload(dataUrl, "qr.png");
   }
 
+  async function downloadPDF() {
+    const dataUrl = await QRCode.toDataURL(value || " ", {
+      errorCorrectionLevel: level, margin: 2, width: 1024,
+      color: { dark: fg, light: bg },
+    });
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const qrSize = 320;
+    doc.setFontSize(18);
+    doc.text("NxtQR — QR Code", pageW / 2, 60, { align: "center" });
+    doc.addImage(dataUrl, "PNG", (pageW - qrSize) / 2, 100, qrSize, qrSize);
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    const label = (value.split("\n")[0] || "").slice(0, 90);
+    if (label) doc.text(label, pageW / 2, 100 + qrSize + 30, { align: "center" });
+    doc.save("qr.pdf");
+  }
+
   function downloadSVG() {
     const svg = svgWrapRef.current?.querySelector("svg");
     if (!svg) return;
