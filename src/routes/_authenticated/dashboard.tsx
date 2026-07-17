@@ -435,6 +435,7 @@ function Dashboard() {
       </main>
 
       {creating && <CreateModal onClose={() => setCreating(false)} />}
+      {staticOpen && <StaticQrModal onClose={() => setStaticOpen(false)} />}
       {uploading && <UploadFileModal onClose={() => setUploading(false)} />}
       {statsFor && <StatsModal qr={statsFor} onClose={() => setStatsFor(null)} />}
       {destsFor && <DestinationsModal qr={destsFor} onClose={() => setDestsFor(null)} />}
