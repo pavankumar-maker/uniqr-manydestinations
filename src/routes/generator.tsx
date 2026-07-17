@@ -1,11 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
-import { Download, Globe, MessageSquare, Phone, Mail, MapPin, CreditCard, Wifi, Type, Contact } from "lucide-react";
+import { Download, Globe, MessageSquare, Phone, Mail, MapPin, CreditCard, Wifi, Type, Contact, Zap, Copy, Check } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { supabase } from "@/integrations/supabase/client";
+import { createQr } from "@/lib/qr.functions";
 
 export const Route = createFileRoute("/generator")({
   head: () => ({
