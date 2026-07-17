@@ -2,9 +2,15 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
-import { QrCode, Plus, Trash2, Copy, ExternalLink, Power, PowerOff, BarChart3, LogOut, ArrowLeft } from "lucide-react";
+import {
+  QrCode, Plus, Trash2, Copy, ExternalLink, Power, PowerOff, BarChart3, LogOut,
+  ArrowLeft, Route as RouteIcon, Pencil, Check, X,
+} from "lucide-react";
 import { toast } from "sonner";
-import { listMyQrs, createQr, updateQr, deleteQr, getQrStats } from "@/lib/qr.functions";
+import {
+  listMyQrs, createQr, updateQr, deleteQr, getQrStats,
+  listDestinations, addDestination, updateDestination, deleteDestination,
+} from "@/lib/qr.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -13,12 +19,22 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 type Qr = Awaited<ReturnType<typeof listMyQrs>>[number];
+type Destination = Awaited<ReturnType<typeof listDestinations>>[number];
+
+const ROUTING_MODES: { value: Qr["routing_mode"]; label: string; hint: string }[] = [
+  { value: "single", label: "Single destination", hint: "Redirect all scans to the default URL." },
+  { value: "rotation", label: "Round-robin", hint: "Cycle through destinations in order." },
+  { value: "weighted", label: "Weighted A/B", hint: "Random split by weight." },
+  { value: "device", label: "By device", hint: "Route by mobile / tablet / desktop." },
+  { value: "priority", label: "By priority", hint: "Highest-priority active destination wins." },
+];
 
 function Dashboard() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
-  const [selected, setSelected] = useState<Qr | null>(null);
+  const [statsFor, setStatsFor] = useState<Qr | null>(null);
+  const [destsFor, setDestsFor] = useState<Qr | null>(null);
   const [email, setEmail] = useState("");
 
   useEffect(() => {
@@ -35,13 +51,21 @@ function Dashboard() {
     onSuccess: () => {
       toast.success("Deleted");
       qc.invalidateQueries({ queryKey: ["qrs"] });
-      setSelected(null);
     },
   });
 
   const toggle = useMutation({
     mutationFn: (q: Qr) => updateQr({ data: { id: q.id, is_active: !q.is_active } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["qrs"] }),
+  });
+
+  const setMode = useMutation({
+    mutationFn: (v: { id: string; routing_mode: Qr["routing_mode"] }) =>
+      updateQr({ data: v }),
+    onSuccess: () => {
+      toast.success("Routing updated");
+      qc.invalidateQueries({ queryKey: ["qrs"] });
+    },
   });
 
   async function signOut() {
@@ -79,7 +103,7 @@ function Dashboard() {
           <div>
             <h1 className="font-display text-3xl font-semibold">Your QR codes</h1>
             <p className="text-muted-foreground mt-1 text-sm">
-              Manage dynamic QR codes. Edit destinations anytime — the printed code never changes.
+              One QR, many destinations. Route by weight, device, priority, or round-robin — edit anytime.
             </p>
           </div>
           <button
@@ -138,19 +162,43 @@ function Dashboard() {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center gap-2">
+                  <label className="mt-4 block text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Routing mode
+                  </label>
+                  <select
+                    value={q.routing_mode ?? "single"}
+                    onChange={(e) =>
+                      setMode.mutate({ id: q.id, routing_mode: e.target.value as Qr["routing_mode"] })
+                    }
+                    className="mt-1 w-full h-9 px-2 rounded-lg bg-background border border-border text-xs"
+                  >
+                    {ROUTING_MODES.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
                     <button
-                      onClick={() => setSelected(q)}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-xs hover:bg-accent"
+                      onClick={() => setDestsFor(q)}
+                      className="inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-xs hover:bg-accent"
+                    >
+                      <RouteIcon className="w-3.5 h-3.5" /> Destinations
+                    </button>
+                    <button
+                      onClick={() => setStatsFor(q)}
+                      className="inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-xs hover:bg-accent"
                     >
                       <BarChart3 className="w-3.5 h-3.5" /> Analytics
                     </button>
+                  </div>
+
+                  <div className="mt-2 flex items-center gap-2">
                     <button
                       onClick={() => toggle.mutate(q)}
-                      className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-border hover:bg-accent"
-                      title={q.is_active ? "Pause" : "Activate"}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-xs hover:bg-accent"
                     >
-                      {q.is_active ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                      {q.is_active ? <PowerOff className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
+                      {q.is_active ? "Pause" : "Activate"}
                     </button>
                     <a
                       href={shortUrl}
@@ -177,7 +225,8 @@ function Dashboard() {
       </main>
 
       {creating && <CreateModal onClose={() => setCreating(false)} />}
-      {selected && <StatsModal qr={selected} onClose={() => setSelected(null)} />}
+      {statsFor && <StatsModal qr={statsFor} onClose={() => setStatsFor(null)} />}
+      {destsFor && <DestinationsModal qr={destsFor} onClose={() => setDestsFor(null)} />}
     </div>
   );
 }
@@ -190,7 +239,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       </div>
       <h3 className="mt-4 font-display text-xl font-semibold">Create your first dynamic QR</h3>
       <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">
-        Dynamic QR codes let you change the destination and track every scan without reprinting.
+        One QR that can redirect to many destinations — by weight, device, priority, or rotation.
       </p>
       <button
         onClick={onCreate}
@@ -224,13 +273,16 @@ function CreateModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur grid place-items-center p-4">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6">
         <h2 className="font-display text-xl font-semibold">New dynamic QR</h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          You can add more destinations and pick a routing mode after creating it.
+        </p>
         <div className="mt-4 space-y-3">
           <label className="block text-xs text-muted-foreground">Name
             <input value={name} onChange={(e) => setName(e.target.value)}
               placeholder="Campaign — Fall menu"
               className="mt-1 w-full h-10 px-3 rounded-lg bg-background border border-border text-sm" />
           </label>
-          <label className="block text-xs text-muted-foreground">Destination URL
+          <label className="block text-xs text-muted-foreground">Default destination URL
             <input value={url} onChange={(e) => setUrl(e.target.value)}
               placeholder="https://example.com/menu"
               className="mt-1 w-full h-10 px-3 rounded-lg bg-background border border-border text-sm" />
@@ -257,6 +309,221 @@ function CreateModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
+  const qc = useQueryClient();
+  const { data: dests = [], isLoading } = useQuery({
+    queryKey: ["dests", qr.id],
+    queryFn: () => listDestinations({ data: { qr_id: qr.id } }),
+  });
+
+  const [label, setLabel] = useState("");
+  const [url, setUrl] = useState("https://");
+  const [weight, setWeight] = useState(1);
+  const [device, setDevice] = useState<Destination["device_filter"]>("any");
+  const [priority, setPriority] = useState(0);
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["dests", qr.id] });
+
+  const add = useMutation({
+    mutationFn: () =>
+      addDestination({
+        data: { qr_id: qr.id, label, target_url: url, weight, device_filter: device, priority },
+      }),
+    onSuccess: () => {
+      toast.success("Destination added");
+      invalidate();
+      setLabel(""); setUrl("https://"); setWeight(1); setDevice("any"); setPriority(0);
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteDestination({ data: { id } }),
+    onSuccess: () => invalidate(),
+  });
+
+  const toggleActive = useMutation({
+    mutationFn: (d: Destination) => updateDestination({ data: { id: d.id, is_active: !d.is_active } }),
+    onSuccess: () => invalidate(),
+  });
+
+  const mode = qr.routing_mode ?? "single";
+  const hint = ROUTING_MODES.find((m) => m.value === mode)?.hint ?? "";
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur grid place-items-center p-4">
+      <div className="w-full max-w-2xl rounded-2xl border border-border bg-card p-6 max-h-[90vh] overflow-auto">
+        <div className="flex items-center gap-2">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <h2 className="font-display text-xl font-semibold truncate">{qr.name} — destinations</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          Mode: <span className="text-foreground font-medium">{mode}</span> — {hint}
+        </p>
+
+        <div className="mt-5 rounded-xl border border-border p-4">
+          <h3 className="text-sm font-medium">Add destination</h3>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="block text-xs text-muted-foreground sm:col-span-2">Label (optional)
+              <input value={label} onChange={(e) => setLabel(e.target.value)}
+                placeholder="Variant A"
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+            </label>
+            <label className="block text-xs text-muted-foreground sm:col-span-2">URL
+              <input value={url} onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://example.com/a"
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+            </label>
+            <label className="block text-xs text-muted-foreground">Weight (weighted mode)
+              <input type="number" min={1} max={100} value={weight}
+                onChange={(e) => setWeight(Number(e.target.value) || 1)}
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+            </label>
+            <label className="block text-xs text-muted-foreground">Priority (priority mode)
+              <input type="number" min={0} max={1000} value={priority}
+                onChange={(e) => setPriority(Number(e.target.value) || 0)}
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+            </label>
+            <label className="block text-xs text-muted-foreground sm:col-span-2">Device (device mode)
+              <select value={device}
+                onChange={(e) => setDevice(e.target.value as Destination["device_filter"])}
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm">
+                <option value="any">Any</option>
+                <option value="mobile">Mobile</option>
+                <option value="tablet">Tablet</option>
+                <option value="desktop">Desktop</option>
+              </select>
+            </label>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button
+              disabled={add.isPending || !url.startsWith("http")}
+              onClick={() => add.mutate()}
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-60"
+            >
+              <Plus className="w-4 h-4" /> Add
+            </button>
+          </div>
+        </div>
+
+        <h3 className="mt-6 text-sm font-medium">
+          Destinations {dests.length > 0 && <span className="text-muted-foreground">({dests.length})</span>}
+        </h3>
+        {isLoading ? (
+          <div className="mt-3 text-sm text-muted-foreground">Loading…</div>
+        ) : dests.length === 0 ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            No extra destinations yet. Scans fall back to the QR's default URL.
+          </p>
+        ) : (
+          <div className="mt-3 divide-y divide-border rounded-lg border border-border">
+            {dests.map((d) => (
+              <DestRow
+                key={d.id}
+                d={d}
+                onToggle={() => toggleActive.mutate(d)}
+                onDelete={() => remove.mutate(d.id)}
+                onSaved={invalidate}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DestRow({
+  d, onToggle, onDelete, onSaved,
+}: {
+  d: Destination;
+  onToggle: () => void;
+  onDelete: () => void;
+  onSaved: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [label, setLabel] = useState(d.label);
+  const [url, setUrl] = useState(d.target_url);
+  const [weight, setWeight] = useState(d.weight);
+  const [priority, setPriority] = useState(d.priority);
+  const [device, setDevice] = useState<Destination["device_filter"]>(d.device_filter);
+
+  const save = useMutation({
+    mutationFn: () =>
+      updateDestination({
+        data: { id: d.id, label, target_url: url, weight, priority, device_filter: device },
+      }),
+    onSuccess: () => {
+      toast.success("Saved");
+      setEditing(false);
+      onSaved();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  if (editing) {
+    return (
+      <div className="p-3 grid gap-2 sm:grid-cols-6 items-center">
+        <input value={label} onChange={(e) => setLabel(e.target.value)}
+          placeholder="Label"
+          className="sm:col-span-2 h-8 px-2 rounded-md bg-background border border-border text-xs" />
+        <input value={url} onChange={(e) => setUrl(e.target.value)}
+          className="sm:col-span-4 h-8 px-2 rounded-md bg-background border border-border text-xs" />
+        <input type="number" value={weight} onChange={(e) => setWeight(Number(e.target.value) || 1)}
+          className="h-8 px-2 rounded-md bg-background border border-border text-xs" title="Weight" />
+        <input type="number" value={priority} onChange={(e) => setPriority(Number(e.target.value) || 0)}
+          className="h-8 px-2 rounded-md bg-background border border-border text-xs" title="Priority" />
+        <select value={device}
+          onChange={(e) => setDevice(e.target.value as Destination["device_filter"])}
+          className="sm:col-span-2 h-8 px-2 rounded-md bg-background border border-border text-xs">
+          <option value="any">Any</option>
+          <option value="mobile">Mobile</option>
+          <option value="tablet">Tablet</option>
+          <option value="desktop">Desktop</option>
+        </select>
+        <div className="sm:col-span-2 flex justify-end gap-2">
+          <button onClick={() => setEditing(false)}
+            className="inline-flex items-center gap-1 h-8 px-2 rounded-md border border-border text-xs">
+            <X className="w-3.5 h-3.5" /> Cancel
+          </button>
+          <button disabled={save.isPending} onClick={() => save.mutate()}
+            className="inline-flex items-center gap-1 h-8 px-2 rounded-md bg-glow text-primary-foreground text-xs">
+            <Check className="w-3.5 h-3.5" /> Save
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-3 flex items-center gap-3">
+      <div className="min-w-0 flex-1">
+        <div className="text-sm truncate">
+          {d.label || <span className="text-muted-foreground">Untitled</span>}
+          <span className="ml-2 text-[10px] uppercase text-muted-foreground">
+            w:{d.weight} · p:{d.priority} · {d.device_filter}
+          </span>
+        </div>
+        <div className="text-xs text-muted-foreground truncate">{d.target_url}</div>
+      </div>
+      <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+        d.is_active ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground"
+      }`}>{d.is_active ? "on" : "off"}</span>
+      <button onClick={onToggle} className="h-8 w-8 grid place-items-center rounded-md border border-border hover:bg-accent" title="Toggle">
+        {d.is_active ? <PowerOff className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
+      </button>
+      <button onClick={() => setEditing(true)} className="h-8 w-8 grid place-items-center rounded-md border border-border hover:bg-accent" title="Edit">
+        <Pencil className="w-3.5 h-3.5" />
+      </button>
+      <button onClick={onDelete} className="h-8 w-8 grid place-items-center rounded-md border border-border hover:bg-destructive/10 hover:text-destructive" title="Delete">
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 }
@@ -298,7 +565,7 @@ function StatsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
           <>
             <div className="mt-6 grid grid-cols-3 gap-3">
               <Stat label="Total scans" value={data?.qr.scan_count ?? 0} />
-              <Stat label="Devices tracked" value={Object.keys(byDevice).length} />
+              <Stat label="Destinations" value={(data?.destinations ?? []).length} />
               <Stat label="Last 500 events" value={(data?.events ?? []).length} />
             </div>
 
@@ -340,7 +607,7 @@ function StatsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value }: { label: string | number; value: number }) {
   return (
     <div className="rounded-xl border border-border bg-background p-4">
       <div className="text-2xl font-display font-semibold">{value}</div>
