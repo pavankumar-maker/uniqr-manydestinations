@@ -1128,3 +1128,68 @@ function LocateButton({ onLocate }: { onLocate: (v: string) => void }) {
     </button>
   );
 }
+
+const ACCEPT_MAP: Record<"image" | "video" | "pdf" | "any", string> = {
+  image: "image/*",
+  video: "video/*",
+  pdf: "application/pdf",
+  any: "*/*",
+};
+const MAX_MB: Record<"image" | "video" | "pdf" | "any", number> = {
+  image: 15,
+  video: 100,
+  pdf: 25,
+  any: 50,
+};
+
+function FileUploader({ accept, onUploaded }: { accept: "image" | "video" | "pdf" | "any"; onUploaded: (url: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const maxMb = MAX_MB[accept];
+    if (file.size > maxMb * 1024 * 1024) {
+      toast.error(`Max ${maxMb} MB`);
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Not signed in");
+      const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+      const path = `${uid}/${Date.now()}-${safeName}`;
+      const { error } = await supabase.storage.from("qr-files").upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+      if (error) throw error;
+      const publicUrl = `${window.location.origin}/api/public/file/${path}`;
+      onUploaded(publicUrl);
+      toast.success("Uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-1.5">
+      <input ref={inputRef} type="file" accept={ACCEPT_MAP[accept]} className="hidden" onChange={onPick} />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs hover:bg-accent disabled:opacity-60"
+      >
+        {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+        {busy ? "Uploading…" : `Upload ${accept === "any" ? "file" : accept} (max ${MAX_MB[accept]} MB)`}
+      </button>
+    </div>
+  );
+}
