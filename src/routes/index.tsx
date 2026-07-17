@@ -13,8 +13,8 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "NxtQR — Unified QR Platform for Enterprises" },
       { name: "description", content: "Generate, customize, and track static & dynamic QR codes. Multi-link QR, digital business cards, analytics, and enterprise-grade security." },
-      { property: "og:title", content: "NxtQR — Unified QR Platform" },
-      { property: "og:description", content: "Enterprise digital identity & smart QR management. One QR, infinite destinations." },
+      { property: "og:title", content: "NxtQR — Unified QR Platform for Enterprises" },
+      { property: "og:description", content: "Generate, customize, and track static & dynamic QR codes. Multi-link QR, digital business cards, analytics, and enterprise-grade security." },
     ],
   }),
   component: Landing,

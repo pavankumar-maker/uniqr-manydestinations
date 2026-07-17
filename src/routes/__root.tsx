@@ -77,12 +77,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "NxtQR — Unified QR Platform" },
-      { name: "description", content: "Enterprise-grade platform to generate, customize and track static & dynamic QR codes." },
-      { property: "og:title", content: "NxtQR — Unified QR Platform" },
-      { property: "og:description", content: "Enterprise digital identity & smart QR management." },
+      { title: "NxtQR — Unified QR Platform for Enterprises" },
+      { name: "description", content: "Generate, customize, and track static & dynamic QR codes. Multi-link QR, digital business cards, analytics, and enterprise-grade security." },
+      { property: "og:title", content: "NxtQR — Unified QR Platform for Enterprises" },
+      { property: "og:description", content: "Generate, customize, and track static & dynamic QR codes. Multi-link QR, digital business cards, analytics, and enterprise-grade security." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "NxtQR — Unified QR Platform for Enterprises" },
+      { name: "twitter:description", content: "Generate, customize, and track static & dynamic QR codes. Multi-link QR, digital business cards, analytics, and enterprise-grade security." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/6726fe31-1327-48c4-a290-ac3bc604cfa1" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/6726fe31-1327-48c4-a290-ac3bc604cfa1" },
     ],
     links: [
       {
