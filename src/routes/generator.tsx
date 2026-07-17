@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import QRCode from "qrcode";
-import { Download, Globe, MessageSquare, Phone, Mail, MapPin, CreditCard, Wifi, Type } from "lucide-react";
+import jsPDF from "jspdf";
+import { Download, Globe, MessageSquare, Phone, Mail, MapPin, CreditCard, Wifi, Type, Contact } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -18,11 +19,12 @@ export const Route = createFileRoute("/generator")({
   component: Generator,
 });
 
-type QRType = "url" | "text" | "whatsapp" | "phone" | "email" | "sms" | "maps" | "upi" | "wifi";
+type QRType = "url" | "text" | "whatsapp" | "phone" | "email" | "sms" | "maps" | "upi" | "wifi" | "vcard";
 
 const types: { key: QRType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { key: "url", label: "Website", icon: Globe },
   { key: "text", label: "Text", icon: Type },
+  { key: "vcard", label: "vCard", icon: Contact },
   { key: "whatsapp", label: "WhatsApp", icon: MessageSquare },
   { key: "phone", label: "Phone", icon: Phone },
   { key: "email", label: "Email", icon: Mail },
@@ -58,6 +60,24 @@ function Generator() {
       color: { dark: fg, light: bg },
     });
     triggerDownload(dataUrl, "qr.png");
+  }
+
+  async function downloadPDF() {
+    const dataUrl = await QRCode.toDataURL(value || " ", {
+      errorCorrectionLevel: level, margin: 2, width: 1024,
+      color: { dark: fg, light: bg },
+    });
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const qrSize = 320;
+    doc.setFontSize(18);
+    doc.text("NxtQR — QR Code", pageW / 2, 60, { align: "center" });
+    doc.addImage(dataUrl, "PNG", (pageW - qrSize) / 2, 100, qrSize, qrSize);
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    const label = (value.split("\n")[0] || "").slice(0, 90);
+    if (label) doc.text(label, pageW / 2, 100 + qrSize + 30, { align: "center" });
+    doc.save("qr.pdf");
   }
 
   function downloadSVG() {
@@ -141,14 +161,18 @@ function Generator() {
             <div className="mt-3 text-xs font-mono text-muted-foreground truncate">
               {value.split("\n")[0] || "—"}
             </div>
-            <div className="mt-5 grid grid-cols-2 gap-2">
+            <div className="mt-5 grid grid-cols-3 gap-2">
               <button onClick={downloadPNG}
-                className="inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-glow text-primary-foreground font-medium shadow-brand hover:opacity-90 transition">
+                className="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand hover:opacity-90 transition">
                 <Download className="w-4 h-4" /> PNG
               </button>
               <button onClick={downloadSVG}
-                className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border hover:bg-secondary transition">
+                className="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl border border-border text-sm hover:bg-secondary transition">
                 <Download className="w-4 h-4" /> SVG
+              </button>
+              <button onClick={downloadPDF}
+                className="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl border border-border text-sm hover:bg-secondary transition">
+                <Download className="w-4 h-4" /> PDF
               </button>
             </div>
           </div>
@@ -254,6 +278,19 @@ function FieldsFor({ type, fields, onChange }: { type: QRType; fields: Record<st
           </div>
         </div>
       );
+    case "vcard":
+      return (
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input label="First name" value={fields.fn} onChange={(v) => onChange("fn", v)} />
+          <Input label="Last name" value={fields.ln} onChange={(v) => onChange("ln", v)} />
+          <Input label="Organization" value={fields.org} onChange={(v) => onChange("org", v)} />
+          <Input label="Title" value={fields.title} onChange={(v) => onChange("title", v)} />
+          <Input label="Phone" value={fields.tel} onChange={(v) => onChange("tel", v)} placeholder="+91 99999 99999" />
+          <Input label="Email" value={fields.email} onChange={(v) => onChange("email", v)} />
+          <Input label="Website" value={fields.url} onChange={(v) => onChange("url", v)} placeholder="https://" />
+          <Input label="Address" value={fields.adr} onChange={(v) => onChange("adr", v)} />
+        </div>
+      );
   }
 }
 
@@ -261,6 +298,7 @@ function defaultsFor(t: QRType): Record<string, string> {
   switch (t) {
     case "url": return { url: "https://nxtqr.app" };
     case "text": return { text: "Hello from NxtQR" };
+    case "vcard": return { fn: "Ada", ln: "Lovelace", org: "NxtQR", title: "Founder", tel: "+919999999999", email: "ada@nxtqr.app", url: "https://nxtqr.app", adr: "" };
     case "whatsapp": return { phone: "919999999999", msg: "Hi!" };
     case "phone": return { phone: "+919999999999" };
     case "email": return { email: "hello@nxtqr.app", subject: "", body: "" };
@@ -291,6 +329,21 @@ function buildValue(t: QRType, f: Record<string, string>): string {
       return `upi://pay?${p.toString()}`;
     }
     case "wifi": return `WIFI:T:${f.enc || "WPA"};S:${f.ssid || ""};P:${f.password || ""};;`;
+    case "vcard": {
+      const lines = [
+        "BEGIN:VCARD", "VERSION:3.0",
+        `N:${f.ln || ""};${f.fn || ""};;;`,
+        `FN:${[f.fn, f.ln].filter(Boolean).join(" ")}`,
+        f.org ? `ORG:${f.org}` : "",
+        f.title ? `TITLE:${f.title}` : "",
+        f.tel ? `TEL;TYPE=CELL:${f.tel}` : "",
+        f.email ? `EMAIL:${f.email}` : "",
+        f.url ? `URL:${f.url}` : "",
+        f.adr ? `ADR;TYPE=WORK:;;${f.adr};;;;` : "",
+        "END:VCARD",
+      ].filter(Boolean);
+      return lines.join("\n");
+    }
   }
 }
 

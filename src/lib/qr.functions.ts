@@ -15,9 +15,14 @@ const DEVICE_FILTERS = ["any", "mobile", "tablet", "desktop"] as const;
 
 const createSchema = z.object({
   name: z.string().min(1).max(80),
-  target_url: z.string().url().max(2000),
+  target_url: z.string().url().max(2000).optional(),
   fg_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#0B0B12"),
   bg_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#FFFFFF"),
+  file_path: z.string().max(500).optional(),
+  file_mime: z.string().max(120).optional(),
+  file_name: z.string().max(200).optional(),
+}).refine((v) => !!v.target_url || !!v.file_path, {
+  message: "Either target_url or file_path is required",
 });
 
 export const listMyQrs = createServerFn({ method: "GET" })
@@ -44,10 +49,13 @@ export const createQr = createServerFn({ method: "POST" })
           user_id: context.userId,
           name: data.name,
           short_id: short,
-          target_url: data.target_url,
+          target_url: data.target_url ?? null,
           fg_color: data.fg_color,
           bg_color: data.bg_color,
           is_dynamic: true,
+          file_path: data.file_path ?? null,
+          file_mime: data.file_mime ?? null,
+          file_name: data.file_name ?? null,
         })
         .select()
         .single();
@@ -182,10 +190,36 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: qr } = await supabaseAdmin
       .from("qr_codes")
-      .select("id, target_url, is_active, routing_mode, rotation_cursor")
+      .select("id, target_url, is_active, routing_mode, rotation_cursor, file_path")
       .eq("short_id", data.shortId)
       .maybeSingle();
     if (!qr || !qr.is_active) return { url: null as string | null };
+
+    // If this QR points to an uploaded file, sign it and short-circuit
+    if (qr.file_path) {
+      const { data: signed } = await supabaseAdmin.storage
+        .from("qr-files")
+        .createSignedUrl(qr.file_path, 60 * 60);
+      const url = signed?.signedUrl ?? null;
+      const reqF = getRequest();
+      const uaF = reqF?.headers.get("user-agent") ?? null;
+      const refF = reqF?.headers.get("referer") ?? null;
+      const devF: "mobile" | "tablet" | "desktop" | null = uaF
+        ? /mobile|android|iphone/i.test(uaF) ? "mobile"
+        : /ipad|tablet/i.test(uaF) ? "tablet" : "desktop"
+        : null;
+      await supabaseAdmin.from("scan_events").insert({
+        qr_id: qr.id, user_agent: uaF, referrer: refF, device: devF,
+      });
+      const { data: curF } = await supabaseAdmin
+        .from("qr_codes").select("scan_count").eq("id", qr.id).single();
+      if (curF) {
+        await supabaseAdmin.from("qr_codes")
+          .update({ scan_count: (curF.scan_count ?? 0) + 1 }).eq("id", qr.id);
+      }
+      return { url };
+    }
+
 
     const req = getRequest();
     const ua = req?.headers.get("user-agent") ?? null;
@@ -206,7 +240,7 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
       .eq("is_active", true);
     const dests = destsRaw ?? [];
 
-    let chosen: string = qr.target_url;
+    let chosen: string = qr.target_url ?? "";
     const mode = qr.routing_mode ?? "single";
 
     if (dests.length > 0 && mode !== "single") {

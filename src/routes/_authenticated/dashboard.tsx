@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
+import QRCode from "qrcode";
+import jsPDF from "jspdf";
 import {
   QrCode, Plus, Trash2, Copy, ExternalLink, Power, PowerOff, BarChart3, LogOut,
-  ArrowLeft, Route as RouteIcon, Pencil, Check, X,
+  ArrowLeft, Route as RouteIcon, Pencil, Check, X, Search, Download, Upload, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -33,9 +35,13 @@ function Dashboard() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [statsFor, setStatsFor] = useState<Qr | null>(null);
   const [destsFor, setDestsFor] = useState<Qr | null>(null);
   const [email, setEmail] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "link" | "file">("all");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
@@ -105,28 +111,86 @@ function Dashboard() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-10">
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <div>
             <h1 className="font-display text-3xl font-semibold">Your QR codes</h1>
             <p className="text-muted-foreground mt-1 text-sm">
               One QR, many destinations. Route by weight, device, priority, or round-robin — edit anytime.
             </p>
           </div>
-          <button
-            onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand hover:opacity-90 transition"
-          >
-            <Plus className="w-4 h-4" /> New dynamic QR
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setUploading(true)}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition"
+            >
+              <Upload className="w-4 h-4" /> Upload file QR
+            </button>
+            <button
+              onClick={() => setCreating(true)}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand hover:opacity-90 transition"
+            >
+              <Plus className="w-4 h-4" /> New dynamic QR
+            </button>
+          </div>
         </div>
 
-        {isLoading ? (
-          <div className="text-muted-foreground text-sm">Loading…</div>
-        ) : qrs.length === 0 ? (
-          <EmptyState onCreate={() => setCreating(true)} />
-        ) : (
+        {/* Search & filters */}
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[220px] max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, URL, or short id…"
+              className="w-full h-10 pl-9 pr-3 rounded-lg bg-card border border-border text-sm"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+            className="h-10 px-3 rounded-lg bg-card border border-border text-sm"
+          >
+            <option value="all">All status</option>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+          </select>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
+            className="h-10 px-3 rounded-lg bg-card border border-border text-sm"
+          >
+            <option value="all">All types</option>
+            <option value="link">Links</option>
+            <option value="file">Files</option>
+          </select>
+        </div>
+
+        {(() => {
+          const term = search.trim().toLowerCase();
+          const filtered = qrs.filter((q) => {
+            if (statusFilter === "active" && !q.is_active) return false;
+            if (statusFilter === "paused" && q.is_active) return false;
+            const isFile = !!q.file_path;
+            if (typeFilter === "file" && !isFile) return false;
+            if (typeFilter === "link" && isFile) return false;
+            if (!term) return true;
+            return (
+              q.name.toLowerCase().includes(term) ||
+              (q.target_url ?? "").toLowerCase().includes(term) ||
+              q.short_id.toLowerCase().includes(term)
+            );
+          });
+          if (isLoading) return <div className="text-muted-foreground text-sm">Loading…</div>;
+          if (qrs.length === 0) return <EmptyState onCreate={() => setCreating(true)} />;
+          if (filtered.length === 0)
+            return (
+              <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                No QR codes match your filters.
+              </div>
+            );
+          return (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {qrs.map((q) => {
+            {filtered.map((q) => {
               const shortUrl = `${origin}/r/${q.short_id}`;
               return (
                 <div
@@ -135,8 +199,13 @@ function Dashboard() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <h3 className="font-medium truncate">{q.name}</h3>
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">{q.target_url}</p>
+                      <h3 className="font-medium truncate flex items-center gap-1.5">
+                        {q.file_path && <FileText className="w-3.5 h-3.5 text-primary shrink-0" />}
+                        {q.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {q.file_path ? (q.file_name ?? "Uploaded file") : q.target_url}
+                      </p>
                     </div>
                     <span
                       className={`shrink-0 text-[10px] uppercase tracking-wide px-2 py-1 rounded-full ${
@@ -183,19 +252,20 @@ function Dashboard() {
                     ))}
                   </select>
 
-                  <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="mt-3 grid grid-cols-3 gap-2">
                     <button
                       onClick={() => setDestsFor(q)}
                       className="inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-xs hover:bg-accent"
                     >
-                      <RouteIcon className="w-3.5 h-3.5" /> Destinations
+                      <RouteIcon className="w-3.5 h-3.5" /> Routes
                     </button>
                     <button
                       onClick={() => setStatsFor(q)}
                       className="inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-xs hover:bg-accent"
                     >
-                      <BarChart3 className="w-3.5 h-3.5" /> Analytics
+                      <BarChart3 className="w-3.5 h-3.5" /> Stats
                     </button>
+                    <DownloadMenu qr={q} shortUrl={shortUrl} />
                   </div>
 
                   <div className="mt-2 flex items-center gap-2">
@@ -227,10 +297,12 @@ function Dashboard() {
               );
             })}
           </div>
-        )}
+          );
+        })()}
       </main>
 
       {creating && <CreateModal onClose={() => setCreating(false)} />}
+      {uploading && <UploadFileModal onClose={() => setUploading(false)} />}
       {statsFor && <StatsModal qr={statsFor} onClose={() => setStatsFor(null)} />}
       {destsFor && <DestinationsModal qr={destsFor} onClose={() => setDestsFor(null)} />}
     </div>
@@ -618,6 +690,162 @@ function Stat({ label, value }: { label: string | number; value: number }) {
     <div className="rounded-xl border border-border bg-background p-4">
       <div className="text-2xl font-display font-semibold">{value}</div>
       <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
+    </div>
+  );
+}
+
+function DownloadMenu({ qr, shortUrl }: { qr: Qr; shortUrl: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+
+  async function png() {
+    const dataUrl = await QRCode.toDataURL(shortUrl, {
+      errorCorrectionLevel: "H", margin: 2, width: 1024,
+      color: { dark: qr.fg_color, light: qr.bg_color },
+    });
+    trigger(dataUrl, `${qr.name || "qr"}.png`);
+    setOpen(false);
+  }
+  async function svg() {
+    const s = await QRCode.toString(shortUrl, {
+      type: "svg", errorCorrectionLevel: "H", margin: 2,
+      color: { dark: qr.fg_color, light: qr.bg_color },
+    });
+    const url = URL.createObjectURL(new Blob([s], { type: "image/svg+xml" }));
+    trigger(url, `${qr.name || "qr"}.svg`);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setOpen(false);
+  }
+  async function pdf() {
+    const dataUrl = await QRCode.toDataURL(shortUrl, {
+      errorCorrectionLevel: "H", margin: 2, width: 1024,
+      color: { dark: qr.fg_color, light: qr.bg_color },
+    });
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const size = 320;
+    doc.setFontSize(18);
+    doc.text(qr.name || "NxtQR", pageW / 2, 60, { align: "center" });
+    doc.addImage(dataUrl, "PNG", (pageW - size) / 2, 100, size, size);
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    doc.text(shortUrl, pageW / 2, 100 + size + 30, { align: "center" });
+    doc.save(`${qr.name || "qr"}.pdf`);
+    setOpen(false);
+  }
+  function trigger(href: string, filename: string) {
+    const a = document.createElement("a");
+    a.href = href; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-xs hover:bg-accent"
+      >
+        <Download className="w-3.5 h-3.5" /> Export
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-20 w-32 rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+          <button onClick={png} className="w-full text-left px-3 py-2 text-xs hover:bg-accent">PNG</button>
+          <button onClick={svg} className="w-full text-left px-3 py-2 text-xs hover:bg-accent">SVG</button>
+          <button onClick={pdf} className="w-full text-left px-3 py-2 text-xs hover:bg-accent">PDF</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UploadFileModal({ onClose }: { onClose: () => void }) {
+  const qc = useQueryClient();
+  const [name, setName] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit() {
+    if (!file || !name.trim()) return;
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("File exceeds 25 MB limit");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data: userRes } = await supabase.auth.getUser();
+      const uid = userRes.user?.id;
+      if (!uid) throw new Error("Not signed in");
+      const clean = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 120);
+      const path = `${uid}/${crypto.randomUUID()}-${clean}`;
+      const { error: upErr } = await supabase.storage.from("qr-files").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
+      if (upErr) throw new Error(upErr.message);
+      await createQr({
+        data: {
+          name: name.trim(),
+          file_path: path,
+          file_mime: file.type || "application/octet-stream",
+          file_name: file.name,
+        },
+      });
+      toast.success("File QR created");
+      qc.invalidateQueries({ queryKey: ["qrs"] });
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur grid place-items-center p-4">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6">
+        <h2 className="font-display text-xl font-semibold">Upload file QR</h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          Upload a PDF, image, or video (up to 25 MB). Scanning the QR opens the file via a secure link.
+        </p>
+        <div className="mt-4 space-y-3">
+          <label className="block text-xs text-muted-foreground">Name
+            <input value={name} onChange={(e) => setName(e.target.value)}
+              placeholder="Menu — Fall 2026"
+              className="mt-1 w-full h-10 px-3 rounded-lg bg-background border border-border text-sm" />
+          </label>
+          <label className="block text-xs text-muted-foreground">File
+            <input
+              type="file"
+              accept="application/pdf,image/*,video/*"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="mt-1 w-full text-xs file:mr-3 file:h-9 file:px-3 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+            />
+          </label>
+          {file && (
+            <div className="text-xs text-muted-foreground">
+              {file.name} · {(file.size / 1024 / 1024).toFixed(2)} MB
+            </div>
+          )}
+        </div>
+        <div className="mt-6 flex gap-2 justify-end">
+          <button onClick={onClose} className="h-10 px-4 rounded-lg border border-border text-sm">Cancel</button>
+          <button
+            disabled={busy || !file || !name.trim()}
+            onClick={submit}
+            className="h-10 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-60"
+          >
+            {busy ? "Uploading…" : "Create QR"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
