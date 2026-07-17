@@ -263,17 +263,26 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
           .update({ scan_count: (curH.scan_count ?? 0) + 1 }).eq("id", qr.id);
       }
       const sorted = [...dests].sort((a, b) => b.priority - a.priority);
+      // Resolve any /api/public/file/{path} proxy URLs to fresh Supabase signed URLs
+      // so <img>/<video>/<iframe> load directly from storage without cross-origin redirects.
+      const links = await Promise.all(sorted.map(async (d) => {
+        let url = d.target_url;
+        const m = url.match(/\/api\/public\/file\/(.+)$/);
+        if (m) {
+          const path = decodeURIComponent(m[1]);
+          const { data: signed } = await supabaseAdmin.storage
+            .from("qr-files").createSignedUrl(path, 60 * 60);
+          if (signed?.signedUrl) url = signed.signedUrl;
+        }
+        return { label: d.label || d.link_type || "Open", url, type: d.link_type ?? "link" };
+      }));
       return {
         url: null as string | null,
         hub: {
           name: qr.name ?? "Links",
           fg: qr.fg_color ?? "#0B0B12",
           bg: qr.bg_color ?? "#FFFFFF",
-          links: sorted.map((d) => ({
-            label: d.label || d.link_type || "Open",
-            url: d.target_url,
-            type: d.link_type ?? "link",
-          })),
+          links,
         } as Hub,
       };
     }
