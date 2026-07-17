@@ -90,31 +90,34 @@ function Dashboard() {
   return (
     <div className="min-h-dvh bg-background">
       <header className="border-b border-border/60 bg-background/70 backdrop-blur-xl sticky top-0 z-40">
-        <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-glow grid place-items-center shadow-brand">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 h-16 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <Link to="/" className="flex min-w-0 items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+            <div className="w-8 h-8 shrink-0 rounded-lg bg-glow grid place-items-center shadow-brand" aria-hidden>
               <QrCode className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-semibold">NxtQR</span>
-            <span className="text-xs text-muted-foreground ml-2 hidden sm:inline">/ Dashboard</span>
+            <span className="font-display font-semibold truncate">NxtQR</span>
+            <span className="text-xs text-muted-foreground ml-2 hidden sm:inline truncate">/ Dashboard</span>
           </Link>
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline text-sm text-muted-foreground">{email}</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden md:inline text-sm text-muted-foreground truncate max-w-[16ch]">{email}</span>
             <Link
               to="/profile"
-              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-sm hover:bg-accent transition"
+              className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg border border-border text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition"
             >
               Profile
             </Link>
             <button
               onClick={signOut}
-              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-sm hover:bg-accent transition"
+              aria-label="Sign out"
+              className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg border border-border text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition"
             >
-              <LogOut className="w-4 h-4" /> Sign out
+              <LogOut className="w-4 h-4" aria-hidden /> <span className="hidden sm:inline">Sign out</span>
             </button>
           </div>
         </div>
       </header>
+
+
 
       <main className="mx-auto max-w-7xl px-6 py-10">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
