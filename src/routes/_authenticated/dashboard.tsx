@@ -408,7 +408,7 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
   });
 
   const [label, setLabel] = useState("");
-  const [url, setUrl] = useState("https://");
+  const [url, setUrl] = useState("");
   const [weight, setWeight] = useState(1);
   const [device, setDevice] = useState<Destination["device_filter"]>("any");
   const [priority, setPriority] = useState(0);
@@ -416,15 +416,19 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["dests", qr.id] });
 
+  const meta = INPUT_META[linkType];
+  const builtUrl = buildUrl(linkType, url);
+  const canAdd = !!builtUrl;
+
   const add = useMutation({
     mutationFn: () =>
       addDestination({
-        data: { qr_id: qr.id, label, target_url: url, weight, device_filter: device, priority, link_type: linkType },
+        data: { qr_id: qr.id, label, target_url: builtUrl!, weight, device_filter: device, priority, link_type: linkType },
       }),
     onSuccess: () => {
       toast.success("Destination added");
       invalidate();
-      setLabel(""); setUrl("https://"); setWeight(1); setDevice("any"); setPriority(0); setLinkType("website");
+      setLabel(""); setUrl(""); setWeight(1); setDevice("any"); setPriority(0); setLinkType("website");
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
@@ -459,7 +463,7 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
           <h3 className="text-sm font-medium">Add destination</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label className="block text-xs text-muted-foreground">Link type (hub icon)
-              <select value={linkType} onChange={(e) => setLinkType(e.target.value as typeof linkType)}
+              <select value={linkType} onChange={(e) => { setLinkType(e.target.value as typeof linkType); setUrl(""); }}
                 className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm capitalize">
                 {LINK_TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
@@ -469,10 +473,15 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
                 placeholder="Follow us on Instagram"
                 className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
             </label>
-            <label className="block text-xs text-muted-foreground sm:col-span-2">URL
+            <label className="block text-xs text-muted-foreground sm:col-span-2">{meta.label}
               <input value={url} onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://example.com/a"
+                inputMode={meta.inputMode}
+                placeholder={meta.placeholder}
                 className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+              {meta.help && <span className="mt-1 block text-[11px] text-muted-foreground">{meta.help}</span>}
+              {url && !canAdd && (
+                <span className="mt-1 block text-[11px] text-destructive">Enter a valid {meta.label.toLowerCase()}.</span>
+              )}
             </label>
             <label className="block text-xs text-muted-foreground">Weight (weighted mode)
               <input type="number" min={1} max={100} value={weight}
@@ -497,7 +506,7 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
           </div>
           <div className="mt-4 flex justify-end">
             <button
-              disabled={add.isPending || !url.startsWith("http")}
+              disabled={add.isPending || !canAdd}
               onClick={() => add.mutate()}
               className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-60"
             >
@@ -505,6 +514,7 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
             </button>
           </div>
         </div>
+
 
         <h3 className="mt-6 text-sm font-medium">
           Destinations {dests.length > 0 && <span className="text-muted-foreground">({dests.length})</span>}
