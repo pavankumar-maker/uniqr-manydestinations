@@ -1071,8 +1071,10 @@ function LocateButton({ onLocate }: { onLocate: (v: string) => void }) {
             const j = (await res.json()) as { display_name?: string };
             onLocate(j.display_name?.trim() || coords);
             toast.success("Current location filled");
+            setLoading(false);
             return;
           }
+
         } catch { /* fall through */ }
         onLocate(coords);
         toast.success("Location coordinates filled");
