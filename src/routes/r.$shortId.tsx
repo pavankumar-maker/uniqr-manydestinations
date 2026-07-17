@@ -64,7 +64,7 @@ function HubOrFallback() {
               No links yet.
             </p>
           )}
-          {hub.links.map((l, i) => {
+          {hub.links.map((l: { label: string; url: string; type: string }, i: number) => {
             const Icon = ICONS[l.type] ?? LinkIcon;
             return (
               <a
