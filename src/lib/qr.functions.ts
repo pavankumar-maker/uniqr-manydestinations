@@ -49,10 +49,13 @@ export const createQr = createServerFn({ method: "POST" })
           user_id: context.userId,
           name: data.name,
           short_id: short,
-          target_url: data.target_url,
+          target_url: data.target_url ?? null,
           fg_color: data.fg_color,
           bg_color: data.bg_color,
           is_dynamic: true,
+          file_path: data.file_path ?? null,
+          file_mime: data.file_mime ?? null,
+          file_name: data.file_name ?? null,
         })
         .select()
         .single();
