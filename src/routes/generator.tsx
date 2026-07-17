@@ -19,11 +19,12 @@ export const Route = createFileRoute("/generator")({
   component: Generator,
 });
 
-type QRType = "url" | "text" | "whatsapp" | "phone" | "email" | "sms" | "maps" | "upi" | "wifi";
+type QRType = "url" | "text" | "whatsapp" | "phone" | "email" | "sms" | "maps" | "upi" | "wifi" | "vcard";
 
 const types: { key: QRType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { key: "url", label: "Website", icon: Globe },
   { key: "text", label: "Text", icon: Type },
+  { key: "vcard", label: "vCard", icon: Contact },
   { key: "whatsapp", label: "WhatsApp", icon: MessageSquare },
   { key: "phone", label: "Phone", icon: Phone },
   { key: "email", label: "Email", icon: Mail },
