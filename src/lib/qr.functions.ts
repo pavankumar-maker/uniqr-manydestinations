@@ -193,10 +193,11 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: qr } = await supabaseAdmin
       .from("qr_codes")
-      .select("id, target_url, is_active, routing_mode, rotation_cursor, file_path")
+      .select("id, name, target_url, is_active, routing_mode, rotation_cursor, file_path, fg_color, bg_color")
       .eq("short_id", data.shortId)
       .maybeSingle();
-    if (!qr || !qr.is_active) return { url: null as string | null };
+    type Hub = { name: string; fg: string; bg: string; links: { label: string; url: string; type: string }[] } | null;
+    if (!qr || !qr.is_active) return { url: null as string | null, hub: null as Hub };
 
     // If this QR points to an uploaded file, sign it and short-circuit
     if (qr.file_path) {
