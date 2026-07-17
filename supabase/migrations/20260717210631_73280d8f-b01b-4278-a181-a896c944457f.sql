@@ -1,0 +1,1 @@
+ALTER TABLE public.qr_destinations ADD COLUMN IF NOT EXISTS link_type text NOT NULL DEFAULT 'link';
