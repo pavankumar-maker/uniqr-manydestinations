@@ -6,7 +6,7 @@ import QRCode from "qrcode";
 import jsPDF from "jspdf";
 import {
   QrCode, Plus, Trash2, Copy, ExternalLink, Power, PowerOff, BarChart3, LogOut,
-  ArrowLeft, Route as RouteIcon, Pencil, Check, X, Search, Download, Upload, FileText,
+  ArrowLeft, Route as RouteIcon, Pencil, Check, X, Search, Download, Upload, FileText, MapPin, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -589,11 +589,15 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
                 inputMode={meta.inputMode}
                 placeholder={meta.placeholder}
                 className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+              {linkType === "maps" && (
+                <LocateButton onLocate={(v) => setUrl(v)} />
+              )}
               {meta.help && <span className="mt-1 block text-[11px] text-muted-foreground">{meta.help}</span>}
               {url && !canAdd && (
                 <span className="mt-1 block text-[11px] text-destructive">Enter a valid {meta.label.toLowerCase()}.</span>
               )}
             </label>
+
 
             {/* Type-specific extras */}
             {linkType === "whatsapp" && (
@@ -1043,5 +1047,58 @@ function UploadFileModal({ onClose }: { onClose: () => void }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function LocateButton({ onLocate }: { onLocate: (v: string) => void }) {
+  const [loading, setLoading] = useState(false);
+  const locate = () => {
+    if (!("geolocation" in navigator)) {
+      toast.error("Geolocation not supported on this device");
+      return;
+    }
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const coords = `${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+            { headers: { Accept: "application/json" } },
+          );
+          if (res.ok) {
+            const j = (await res.json()) as { display_name?: string };
+            onLocate(j.display_name?.trim() || coords);
+            toast.success("Current location filled");
+            setLoading(false);
+            return;
+          }
+
+        } catch { /* fall through */ }
+        onLocate(coords);
+        toast.success("Location coordinates filled");
+        setLoading(false);
+      },
+
+      (err) => {
+        toast.error(err.code === err.PERMISSION_DENIED ? "Location permission denied" : "Couldn't get location");
+        setLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+    // ensure spinner clears after callback resolves
+    setTimeout(() => setLoading(false), 12000);
+  };
+  return (
+    <button
+      type="button"
+      onClick={locate}
+      disabled={loading}
+      className="mt-1.5 inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs hover:bg-accent disabled:opacity-60"
+    >
+      {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
+      Use my current location
+    </button>
   );
 }
