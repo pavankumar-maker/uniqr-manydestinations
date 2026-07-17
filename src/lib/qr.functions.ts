@@ -190,10 +190,36 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: qr } = await supabaseAdmin
       .from("qr_codes")
-      .select("id, target_url, is_active, routing_mode, rotation_cursor")
+      .select("id, target_url, is_active, routing_mode, rotation_cursor, file_path")
       .eq("short_id", data.shortId)
       .maybeSingle();
     if (!qr || !qr.is_active) return { url: null as string | null };
+
+    // If this QR points to an uploaded file, sign it and short-circuit
+    if (qr.file_path) {
+      const { data: signed } = await supabaseAdmin.storage
+        .from("qr-files")
+        .createSignedUrl(qr.file_path, 60 * 60);
+      const url = signed?.signedUrl ?? null;
+      const reqF = getRequest();
+      const uaF = reqF?.headers.get("user-agent") ?? null;
+      const refF = reqF?.headers.get("referer") ?? null;
+      const devF: "mobile" | "tablet" | "desktop" | null = uaF
+        ? /mobile|android|iphone/i.test(uaF) ? "mobile"
+        : /ipad|tablet/i.test(uaF) ? "tablet" : "desktop"
+        : null;
+      await supabaseAdmin.from("scan_events").insert({
+        qr_id: qr.id, user_agent: uaF, referrer: refF, device: devF,
+      });
+      const { data: curF } = await supabaseAdmin
+        .from("qr_codes").select("scan_count").eq("id", qr.id).single();
+      if (curF) {
+        await supabaseAdmin.from("qr_codes")
+          .update({ scan_count: (curF.scan_count ?? 0) + 1 }).eq("id", qr.id);
+      }
+      return { url };
+    }
+
 
     const req = getRequest();
     const ua = req?.headers.get("user-agent") ?? null;
