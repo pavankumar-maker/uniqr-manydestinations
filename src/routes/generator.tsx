@@ -278,6 +278,19 @@ function FieldsFor({ type, fields, onChange }: { type: QRType; fields: Record<st
           </div>
         </div>
       );
+    case "vcard":
+      return (
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input label="First name" value={fields.fn} onChange={(v) => onChange("fn", v)} />
+          <Input label="Last name" value={fields.ln} onChange={(v) => onChange("ln", v)} />
+          <Input label="Organization" value={fields.org} onChange={(v) => onChange("org", v)} />
+          <Input label="Title" value={fields.title} onChange={(v) => onChange("title", v)} />
+          <Input label="Phone" value={fields.tel} onChange={(v) => onChange("tel", v)} placeholder="+91 99999 99999" />
+          <Input label="Email" value={fields.email} onChange={(v) => onChange("email", v)} />
+          <Input label="Website" value={fields.url} onChange={(v) => onChange("url", v)} placeholder="https://" />
+          <Input label="Address" value={fields.adr} onChange={(v) => onChange("adr", v)} />
+        </div>
+      );
   }
 }
 
@@ -285,6 +298,7 @@ function defaultsFor(t: QRType): Record<string, string> {
   switch (t) {
     case "url": return { url: "https://nxtqr.app" };
     case "text": return { text: "Hello from NxtQR" };
+    case "vcard": return { fn: "Ada", ln: "Lovelace", org: "NxtQR", title: "Founder", tel: "+919999999999", email: "ada@nxtqr.app", url: "https://nxtqr.app", adr: "" };
     case "whatsapp": return { phone: "919999999999", msg: "Hi!" };
     case "phone": return { phone: "+919999999999" };
     case "email": return { email: "hello@nxtqr.app", subject: "", body: "" };
