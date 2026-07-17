@@ -62,7 +62,7 @@ const GRADIENTS = [
   ["#fa709a", "#fee140", "#ff9a9e"],
   ["#30cfd0", "#330867", "#5b247a"],
   ["#ff6a00", "#ee0979", "#8e2de2"],
-  ["#0f2027", "#203a43", "#2c5364"],
+  ["#a1c4fd", "#c2e9fb", "#667eea"],
 ];
 
 function HubOrFallback() {
