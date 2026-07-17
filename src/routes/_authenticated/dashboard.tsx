@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
+import QRCode from "qrcode";
+import jsPDF from "jspdf";
 import {
   QrCode, Plus, Trash2, Copy, ExternalLink, Power, PowerOff, BarChart3, LogOut,
-  ArrowLeft, Route as RouteIcon, Pencil, Check, X,
+  ArrowLeft, Route as RouteIcon, Pencil, Check, X, Search, Download, Upload, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
