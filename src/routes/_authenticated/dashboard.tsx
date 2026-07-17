@@ -614,11 +614,15 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
               {linkType === "maps" && (
                 <LocateButton onLocate={(v) => setUrl(v)} />
               )}
+              {meta.upload && (
+                <FileUploader accept={meta.upload} onUploaded={(u) => setUrl(u)} />
+              )}
               {meta.help && <span className="mt-1 block text-[11px] text-muted-foreground">{meta.help}</span>}
               {url && !canAdd && (
                 <span className="mt-1 block text-[11px] text-destructive">Enter a valid {meta.label.toLowerCase()}.</span>
               )}
             </label>
+
 
 
             {/* Type-specific extras */}
