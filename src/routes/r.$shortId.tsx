@@ -92,7 +92,7 @@ function HubOrFallback() {
 
       <div className="relative max-w-md mx-auto px-4 pb-16">
         {/* Cover banner */}
-        <div className="relative mt-4 h-44 rounded-3xl overflow-hidden shadow-xl ring-1 ring-black/5">
+        <div className="relative mt-4 h-28 sm:h-36 rounded-3xl overflow-hidden shadow-xl ring-1 ring-black/5">
           <div className="absolute inset-0" style={{ background: cover }} />
           {/* Decorative shapes */}
           <div className="absolute -top-10 -right-8 w-40 h-40 rounded-full bg-white/10 backdrop-blur-sm" />
