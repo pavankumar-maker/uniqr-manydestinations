@@ -1226,9 +1226,18 @@ function StaticQrModal({ onClose }: { onClose: () => void }) {
   const [phone, setPhone] = useState("");
   const [sms, setSms] = useState({ to: "", body: "" });
   const [upi, setUpi] = useState({ vpa: "", name: "", amount: "", note: "" });
+  const [whatsapp, setWhatsapp] = useState({ number: "", message: "" });
+  const [maps, setMaps] = useState({ query: "", lat: "", lng: "" });
+  const [fileUrl, setFileUrl] = useState("");
+  const [links, setLinks] = useState({
+    title: "",
+    subtitle: "",
+    items: [{ label: "Website", url: "https://", type: "website" }] as LinkItem[],
+  });
 
   const value = useMemo(() => {
     const esc = (s: string) => s.replace(/([\\;,":])/g, "\\$1");
+    const origin = (typeof window !== "undefined" ? PUBLISHED_QR_ORIGIN : PUBLISHED_QR_ORIGIN);
     switch (kind) {
       case "url": return url.trim();
       case "text": return text;
