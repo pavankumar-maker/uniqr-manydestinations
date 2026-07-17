@@ -1168,7 +1168,7 @@ function FileUploader({ accept, onUploaded }: { accept: "image" | "video" | "pdf
         contentType: file.type || undefined,
       });
       if (error) throw error;
-      const publicUrl = `${window.location.origin}/api/public/file/${path}`;
+      const publicUrl = `${PUBLISHED_QR_ORIGIN}/api/public/file/${path}`;
       onUploaded(publicUrl);
       toast.success("Uploaded");
     } catch (err) {
