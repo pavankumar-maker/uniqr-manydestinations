@@ -1,0 +1,2 @@
+ALTER TABLE public.qr_codes DROP CONSTRAINT IF EXISTS qr_codes_routing_mode_chk;
+ALTER TABLE public.qr_codes ADD CONSTRAINT qr_codes_routing_mode_chk CHECK (routing_mode IN ('single','rotation','weighted','device','priority','hub'));
