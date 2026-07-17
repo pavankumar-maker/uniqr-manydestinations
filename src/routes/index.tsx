@@ -44,11 +44,6 @@ const qrTypes = [
   { icon: Layers, name: "vCard" },
 ];
 
-const tiers = [
-  { name: "Starter", price: "Free", desc: "For individuals exploring QR.", features: ["5 dynamic QRs", "Basic analytics", "PNG/SVG export", "Community support"], cta: "Start free" },
-  { name: "Business", price: "$19", suffix: "/mo", featured: true, desc: "For growing teams and brands.", features: ["Unlimited dynamic QRs", "Advanced analytics", "Custom branding & logos", "Multi-link routing", "Priority support"], cta: "Start 14-day trial" },
-  { name: "Enterprise", price: "Custom", desc: "For organizations at scale.", features: ["SSO & SCIM", "Audit logs", "Bulk generation API", "Dedicated success manager", "99.99% SLA"], cta: "Talk to sales" },
-];
 
 function Landing() {
   return (
