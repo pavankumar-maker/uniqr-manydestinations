@@ -158,6 +158,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [staticOpen, setStaticOpen] = useState(false);
   const [statsFor, setStatsFor] = useState<Qr | null>(null);
   const [destsFor, setDestsFor] = useState<Qr | null>(null);
   const [email, setEmail] = useState("");
@@ -243,7 +244,13 @@ function Dashboard() {
               One QR, many destinations. Route by weight, device, priority, or round-robin — edit anytime.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setStaticOpen(true)}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition"
+            >
+              <QrCode className="w-4 h-4" /> Static QR
+            </button>
             <button
               onClick={() => setUploading(true)}
               className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition"
@@ -428,6 +435,7 @@ function Dashboard() {
       </main>
 
       {creating && <CreateModal onClose={() => setCreating(false)} />}
+      {staticOpen && <StaticQrModal onClose={() => setStaticOpen(false)} />}
       {uploading && <UploadFileModal onClose={() => setUploading(false)} />}
       {statsFor && <StatsModal qr={statsFor} onClose={() => setStatsFor(null)} />}
       {destsFor && <DestinationsModal qr={destsFor} onClose={() => setDestsFor(null)} />}
@@ -1190,6 +1198,261 @@ function FileUploader({ accept, onUploaded }: { accept: "image" | "video" | "pdf
         {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
         {busy ? "Uploading…" : `Upload ${accept === "any" ? "file" : accept} (max ${MAX_MB[accept]} MB)`}
       </button>
+    </div>
+  );
+}
+
+type StaticKind = "url" | "text" | "wifi" | "vcard" | "email" | "phone" | "sms" | "upi";
+
+function StaticQrModal({ onClose }: { onClose: () => void }) {
+  const [kind, setKind] = useState<StaticKind>("url");
+  const [fg, setFg] = useState("#0B0B12");
+  const [bg, setBg] = useState("#FFFFFF");
+  const [size, setSize] = useState(512);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+
+  // per-kind state
+  const [url, setUrl] = useState("https://");
+  const [text, setText] = useState("");
+  const [wifi, setWifi] = useState({ ssid: "", password: "", enc: "WPA" as "WPA" | "WEP" | "nopass", hidden: false });
+  const [vcard, setVcard] = useState({ name: "", org: "", title: "", phone: "", email: "", url: "" });
+  const [emailF, setEmailF] = useState({ to: "", subject: "", body: "" });
+  const [phone, setPhone] = useState("");
+  const [sms, setSms] = useState({ to: "", body: "" });
+  const [upi, setUpi] = useState({ vpa: "", name: "", amount: "", note: "" });
+
+  const value = useMemo(() => {
+    const esc = (s: string) => s.replace(/([\\;,":])/g, "\\$1");
+    switch (kind) {
+      case "url": return url.trim();
+      case "text": return text;
+      case "wifi": return `WIFI:T:${wifi.enc};S:${esc(wifi.ssid)};${wifi.enc !== "nopass" ? `P:${esc(wifi.password)};` : ""}${wifi.hidden ? "H:true;" : ""};`;
+      case "vcard": return [
+        "BEGIN:VCARD","VERSION:3.0",
+        `FN:${vcard.name}`,
+        vcard.org && `ORG:${vcard.org}`,
+        vcard.title && `TITLE:${vcard.title}`,
+        vcard.phone && `TEL:${vcard.phone}`,
+        vcard.email && `EMAIL:${vcard.email}`,
+        vcard.url && `URL:${vcard.url}`,
+        "END:VCARD",
+      ].filter(Boolean).join("\n");
+      case "email": {
+        const p = new URLSearchParams();
+        if (emailF.subject) p.set("subject", emailF.subject);
+        if (emailF.body) p.set("body", emailF.body);
+        const q = p.toString();
+        return `mailto:${emailF.to}${q ? `?${q}` : ""}`;
+      }
+      case "phone": return phone ? `tel:${phone}` : "";
+      case "sms": return sms.to ? `sms:${sms.to}${sms.body ? `?body=${encodeURIComponent(sms.body)}` : ""}` : "";
+      case "upi": {
+        if (!upi.vpa) return "";
+        const p = new URLSearchParams({ pa: upi.vpa });
+        if (upi.name) p.set("pn", upi.name);
+        if (upi.amount) p.set("am", upi.amount);
+        if (upi.note) p.set("tn", upi.note);
+        p.set("cu", "INR");
+        return `upi://pay?${p.toString()}`;
+      }
+    }
+  }, [kind, url, text, wifi, vcard, emailF, phone, sms, upi]);
+
+  const canRender = !!value && value.length > 0;
+
+  async function downloadPng() {
+    if (!canRender) return;
+    const dataUrl = await QRCode.toDataURL(value, { width: size, margin: 2, color: { dark: fg, light: bg } });
+    const a = document.createElement("a");
+    a.href = dataUrl; a.download = `nxtqr-static-${kind}.png`; a.click();
+  }
+  function downloadSvg() {
+    if (!svgRef.current) return;
+    const svg = svgRef.current.outerHTML;
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = `nxtqr-static-${kind}.svg`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  async function downloadPdf() {
+    if (!canRender) return;
+    const dataUrl = await QRCode.toDataURL(value, { width: 1024, margin: 2, color: { dark: fg, light: bg } });
+    const pdf = new jsPDF({ unit: "pt", format: "a4" });
+    const w = 320; const x = (pdf.internal.pageSize.getWidth() - w) / 2;
+    pdf.setFont("helvetica", "bold"); pdf.setFontSize(18);
+    pdf.text("NxtQR — Static QR", pdf.internal.pageSize.getWidth() / 2, 60, { align: "center" });
+    pdf.addImage(dataUrl, "PNG", x, 100, w, w);
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
+    pdf.text(`Type: ${kind}`, pdf.internal.pageSize.getWidth() / 2, 460, { align: "center" });
+    pdf.save(`nxtqr-static-${kind}.pdf`);
+  }
+
+  const inputCls = "mt-1 w-full h-10 px-3 rounded-lg bg-background border border-border text-sm";
+  const labelCls = "block text-xs text-muted-foreground";
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur grid place-items-center p-4 overflow-y-auto">
+      <div className="w-full max-w-3xl rounded-2xl border border-border bg-card p-6 my-8">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-display text-xl font-semibold">New static QR</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Encodes content directly into the QR. No tracking, no redirects — the content cannot be edited after printing.
+            </p>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="w-8 h-8 grid place-items-center rounded-lg border border-border hover:bg-accent">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {(["url","text","wifi","vcard","email","phone","sms","upi"] as StaticKind[]).map((k) => (
+            <button key={k} onClick={() => setKind(k)}
+              className={`h-9 px-3 rounded-lg border text-xs capitalize ${kind === k ? "border-glow bg-glow/10 text-primary" : "border-border hover:bg-accent"}`}>
+              {k === "url" ? "URL" : k === "upi" ? "UPI" : k === "sms" ? "SMS" : k === "vcard" ? "vCard" : k}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-5 grid md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            {kind === "url" && (
+              <label className={labelCls}>URL
+                <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" className={inputCls} />
+              </label>
+            )}
+            {kind === "text" && (
+              <label className={labelCls}>Text
+                <textarea value={text} onChange={(e) => setText(e.target.value)} rows={4} placeholder="Any plain text…" className={`${inputCls} h-auto py-2`} />
+              </label>
+            )}
+            {kind === "wifi" && (
+              <>
+                <label className={labelCls}>Network name (SSID)
+                  <input value={wifi.ssid} onChange={(e) => setWifi({ ...wifi, ssid: e.target.value })} className={inputCls} />
+                </label>
+                <label className={labelCls}>Encryption
+                  <select value={wifi.enc} onChange={(e) => setWifi({ ...wifi, enc: e.target.value as typeof wifi.enc })} className={inputCls}>
+                    <option value="WPA">WPA / WPA2</option>
+                    <option value="WEP">WEP</option>
+                    <option value="nopass">None</option>
+                  </select>
+                </label>
+                {wifi.enc !== "nopass" && (
+                  <label className={labelCls}>Password
+                    <input value={wifi.password} onChange={(e) => setWifi({ ...wifi, password: e.target.value })} className={inputCls} />
+                  </label>
+                )}
+                <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                  <input type="checkbox" checked={wifi.hidden} onChange={(e) => setWifi({ ...wifi, hidden: e.target.checked })} /> Hidden network
+                </label>
+              </>
+            )}
+            {kind === "vcard" && (
+              <div className="grid grid-cols-2 gap-3">
+                <label className={`${labelCls} col-span-2`}>Full name
+                  <input value={vcard.name} onChange={(e) => setVcard({ ...vcard, name: e.target.value })} className={inputCls} />
+                </label>
+                <label className={labelCls}>Organization
+                  <input value={vcard.org} onChange={(e) => setVcard({ ...vcard, org: e.target.value })} className={inputCls} />
+                </label>
+                <label className={labelCls}>Title
+                  <input value={vcard.title} onChange={(e) => setVcard({ ...vcard, title: e.target.value })} className={inputCls} />
+                </label>
+                <label className={labelCls}>Phone
+                  <input value={vcard.phone} onChange={(e) => setVcard({ ...vcard, phone: e.target.value })} className={inputCls} />
+                </label>
+                <label className={labelCls}>Email
+                  <input value={vcard.email} onChange={(e) => setVcard({ ...vcard, email: e.target.value })} className={inputCls} />
+                </label>
+                <label className={`${labelCls} col-span-2`}>Website
+                  <input value={vcard.url} onChange={(e) => setVcard({ ...vcard, url: e.target.value })} className={inputCls} />
+                </label>
+              </div>
+            )}
+            {kind === "email" && (
+              <>
+                <label className={labelCls}>To
+                  <input value={emailF.to} onChange={(e) => setEmailF({ ...emailF, to: e.target.value })} placeholder="you@example.com" className={inputCls} />
+                </label>
+                <label className={labelCls}>Subject
+                  <input value={emailF.subject} onChange={(e) => setEmailF({ ...emailF, subject: e.target.value })} className={inputCls} />
+                </label>
+                <label className={labelCls}>Body
+                  <textarea value={emailF.body} onChange={(e) => setEmailF({ ...emailF, body: e.target.value })} rows={3} className={`${inputCls} h-auto py-2`} />
+                </label>
+              </>
+            )}
+            {kind === "phone" && (
+              <label className={labelCls}>Phone number
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" className={inputCls} />
+              </label>
+            )}
+            {kind === "sms" && (
+              <>
+                <label className={labelCls}>Phone number
+                  <input value={sms.to} onChange={(e) => setSms({ ...sms, to: e.target.value })} className={inputCls} />
+                </label>
+                <label className={labelCls}>Message
+                  <textarea value={sms.body} onChange={(e) => setSms({ ...sms, body: e.target.value })} rows={3} className={`${inputCls} h-auto py-2`} />
+                </label>
+              </>
+            )}
+            {kind === "upi" && (
+              <div className="grid grid-cols-2 gap-3">
+                <label className={`${labelCls} col-span-2`}>UPI ID (VPA)
+                  <input value={upi.vpa} onChange={(e) => setUpi({ ...upi, vpa: e.target.value })} placeholder="yourname@upi" className={inputCls} />
+                </label>
+                <label className={labelCls}>Payee name
+                  <input value={upi.name} onChange={(e) => setUpi({ ...upi, name: e.target.value })} className={inputCls} />
+                </label>
+                <label className={labelCls}>Amount (₹)
+                  <input value={upi.amount} onChange={(e) => setUpi({ ...upi, amount: e.target.value })} inputMode="decimal" className={inputCls} />
+                </label>
+                <label className={`${labelCls} col-span-2`}>Note
+                  <input value={upi.note} onChange={(e) => setUpi({ ...upi, note: e.target.value })} className={inputCls} />
+                </label>
+              </div>
+            )}
+
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              <label className={labelCls}>Foreground
+                <input type="color" value={fg} onChange={(e) => setFg(e.target.value.toUpperCase())} className="mt-1 w-full h-10 rounded-lg bg-background border border-border" />
+              </label>
+              <label className={labelCls}>Background
+                <input type="color" value={bg} onChange={(e) => setBg(e.target.value.toUpperCase())} className="mt-1 w-full h-10 rounded-lg bg-background border border-border" />
+              </label>
+              <label className={labelCls}>Size (px)
+                <input type="number" min={128} max={2048} step={32} value={size} onChange={(e) => setSize(Math.max(128, Math.min(2048, Number(e.target.value) || 512)))} className={inputCls} />
+              </label>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center justify-start gap-4">
+            <div className="p-4 rounded-2xl border border-border bg-white">
+              {canRender ? (
+                <QRCodeSVG ref={svgRef} value={value!} size={220} fgColor={fg} bgColor={bg} level="M" includeMargin />
+              ) : (
+                <div className="w-[220px] h-[220px] grid place-items-center text-xs text-muted-foreground">Fill in the fields to preview</div>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-2 w-full">
+              <button disabled={!canRender} onClick={downloadPng} className="h-10 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-60 inline-flex items-center justify-center gap-1.5">
+                <Download className="w-4 h-4" /> PNG
+              </button>
+              <button disabled={!canRender} onClick={downloadSvg} className="h-10 rounded-lg border border-border text-sm disabled:opacity-60 inline-flex items-center justify-center gap-1.5">
+                <Download className="w-4 h-4" /> SVG
+              </button>
+              <button disabled={!canRender} onClick={downloadPdf} className="h-10 rounded-lg border border-border text-sm disabled:opacity-60 inline-flex items-center justify-center gap-1.5">
+                <Download className="w-4 h-4" /> PDF
+              </button>
+            </div>
+            <p className="text-[11px] text-muted-foreground text-center">
+              Static QRs are generated locally and downloaded to your device — nothing is saved to the dashboard.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
