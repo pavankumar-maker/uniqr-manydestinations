@@ -37,6 +37,86 @@ const LINK_TYPE_OPTIONS = [
   "linkedin", "tiktok", "telegram", "email", "phone", "maps", "upi", "file",
 ] as const;
 
+type LinkType = (typeof LINK_TYPE_OPTIONS)[number];
+
+const INPUT_META: Record<LinkType, { label: string; placeholder: string; help?: string; inputMode?: "text" | "tel" | "email" | "url" | "numeric" }> = {
+  link:      { label: "URL",             placeholder: "https://example.com",         inputMode: "url" },
+  website:   { label: "Website URL",     placeholder: "https://example.com",         inputMode: "url" },
+  whatsapp:  { label: "WhatsApp number", placeholder: "+91 98765 43210",             help: "Include country code. We'll open a WhatsApp chat.", inputMode: "tel" },
+  facebook:  { label: "Facebook URL / username", placeholder: "yourpage or https://facebook.com/yourpage" },
+  instagram: { label: "Instagram username / URL", placeholder: "@yourhandle" },
+  twitter:   { label: "X / Twitter username or URL", placeholder: "@yourhandle" },
+  youtube:   { label: "YouTube URL",     placeholder: "https://youtube.com/@channel", inputMode: "url" },
+  linkedin:  { label: "LinkedIn URL",    placeholder: "https://linkedin.com/in/you", inputMode: "url" },
+  tiktok:    { label: "TikTok username / URL", placeholder: "@yourhandle" },
+  telegram:  { label: "Telegram username / URL", placeholder: "@yourhandle" },
+  email:     { label: "Email address",   placeholder: "you@example.com",             inputMode: "email" },
+  phone:     { label: "Phone number",    placeholder: "+91 98765 43210",             inputMode: "tel" },
+  maps:      { label: "Address or Google Maps URL", placeholder: "221B Baker Street, London" },
+  upi:       { label: "UPI ID",          placeholder: "yourname@upi",                help: "Opens the user's UPI app to pay you." },
+  file:      { label: "File URL",        placeholder: "https://…", inputMode: "url" },
+};
+
+function digits(v: string) { return v.replace(/[^\d]/g, ""); }
+function ensureHttps(v: string) {
+  const t = v.trim();
+  if (!t) return "";
+  if (/^https?:\/\//i.test(t)) return t;
+  return `https://${t}`;
+}
+function isValidUrl(v: string) { try { new URL(v); return true; } catch { return false; } }
+function stripAt(v: string) { return v.trim().replace(/^@+/, ""); }
+
+function buildUrl(type: LinkType, raw: string): string | null {
+  const v = raw.trim();
+  if (!v) return null;
+  switch (type) {
+    case "whatsapp": {
+      const d = digits(v);
+      return d.length >= 6 ? `https://wa.me/${d}` : null;
+    }
+    case "phone": {
+      const d = digits(v);
+      return d.length >= 4 ? `tel:${v.startsWith("+") ? "+" : ""}${d}` : null;
+    }
+    case "email": {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? `mailto:${v}` : null;
+    }
+    case "upi": {
+      return /^[\w.\-]+@[\w.\-]+$/.test(v) ? `upi://pay?pa=${encodeURIComponent(v)}` : null;
+    }
+    case "instagram": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://instagram.com/${stripAt(v)}`;
+    }
+    case "twitter": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://x.com/${stripAt(v)}`;
+    }
+    case "tiktok": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://tiktok.com/@${stripAt(v)}`;
+    }
+    case "telegram": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://t.me/${stripAt(v)}`;
+    }
+    case "facebook": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://facebook.com/${stripAt(v)}`;
+    }
+    case "maps": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v)}`;
+    }
+    default: {
+      const u = ensureHttps(v);
+      return isValidUrl(u) ? u : null;
+    }
+  }
+}
+
+
 function Dashboard() {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -408,7 +488,7 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
   });
 
   const [label, setLabel] = useState("");
-  const [url, setUrl] = useState("https://");
+  const [url, setUrl] = useState("");
   const [weight, setWeight] = useState(1);
   const [device, setDevice] = useState<Destination["device_filter"]>("any");
   const [priority, setPriority] = useState(0);
@@ -416,15 +496,19 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["dests", qr.id] });
 
+  const meta = INPUT_META[linkType];
+  const builtUrl = buildUrl(linkType, url);
+  const canAdd = !!builtUrl;
+
   const add = useMutation({
     mutationFn: () =>
       addDestination({
-        data: { qr_id: qr.id, label, target_url: url, weight, device_filter: device, priority, link_type: linkType },
+        data: { qr_id: qr.id, label, target_url: builtUrl!, weight, device_filter: device, priority, link_type: linkType },
       }),
     onSuccess: () => {
       toast.success("Destination added");
       invalidate();
-      setLabel(""); setUrl("https://"); setWeight(1); setDevice("any"); setPriority(0); setLinkType("website");
+      setLabel(""); setUrl(""); setWeight(1); setDevice("any"); setPriority(0); setLinkType("website");
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
@@ -459,7 +543,7 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
           <h3 className="text-sm font-medium">Add destination</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label className="block text-xs text-muted-foreground">Link type (hub icon)
-              <select value={linkType} onChange={(e) => setLinkType(e.target.value as typeof linkType)}
+              <select value={linkType} onChange={(e) => { setLinkType(e.target.value as typeof linkType); setUrl(""); }}
                 className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm capitalize">
                 {LINK_TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
@@ -469,10 +553,15 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
                 placeholder="Follow us on Instagram"
                 className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
             </label>
-            <label className="block text-xs text-muted-foreground sm:col-span-2">URL
+            <label className="block text-xs text-muted-foreground sm:col-span-2">{meta.label}
               <input value={url} onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://example.com/a"
+                inputMode={meta.inputMode}
+                placeholder={meta.placeholder}
                 className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+              {meta.help && <span className="mt-1 block text-[11px] text-muted-foreground">{meta.help}</span>}
+              {url && !canAdd && (
+                <span className="mt-1 block text-[11px] text-destructive">Enter a valid {meta.label.toLowerCase()}.</span>
+              )}
             </label>
             <label className="block text-xs text-muted-foreground">Weight (weighted mode)
               <input type="number" min={1} max={100} value={weight}
@@ -497,7 +586,7 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
           </div>
           <div className="mt-4 flex justify-end">
             <button
-              disabled={add.isPending || !url.startsWith("http")}
+              disabled={add.isPending || !canAdd}
               onClick={() => add.mutate()}
               className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-60"
             >
@@ -505,6 +594,7 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
             </button>
           </div>
         </div>
+
 
         <h3 className="mt-6 text-sm font-medium">
           Destinations {dests.length > 0 && <span className="text-muted-foreground">({dests.length})</span>}
