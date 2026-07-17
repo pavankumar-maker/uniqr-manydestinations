@@ -329,6 +329,21 @@ function buildValue(t: QRType, f: Record<string, string>): string {
       return `upi://pay?${p.toString()}`;
     }
     case "wifi": return `WIFI:T:${f.enc || "WPA"};S:${f.ssid || ""};P:${f.password || ""};;`;
+    case "vcard": {
+      const lines = [
+        "BEGIN:VCARD", "VERSION:3.0",
+        `N:${f.ln || ""};${f.fn || ""};;;`,
+        `FN:${[f.fn, f.ln].filter(Boolean).join(" ")}`,
+        f.org ? `ORG:${f.org}` : "",
+        f.title ? `TITLE:${f.title}` : "",
+        f.tel ? `TEL;TYPE=CELL:${f.tel}` : "",
+        f.email ? `EMAIL:${f.email}` : "",
+        f.url ? `URL:${f.url}` : "",
+        f.adr ? `ADR;TYPE=WORK:;;${f.adr};;;;` : "",
+        "END:VCARD",
+      ].filter(Boolean);
+      return lines.join("\n");
+    }
   }
 }
 
