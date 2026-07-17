@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import {
   Globe, MessageCircle, Facebook, Instagram, Twitter, Youtube, Linkedin,
   Mail, Phone, MapPin, CreditCard, FileText, Link as LinkIcon, Send,
-  BadgeCheck, Share2, ExternalLink,
+  BadgeCheck, Share2, ExternalLink, Image as ImageIcon, Video as VideoIcon,
 } from "lucide-react";
 import { resolveShortAndTrack } from "@/lib/qr.functions";
 
