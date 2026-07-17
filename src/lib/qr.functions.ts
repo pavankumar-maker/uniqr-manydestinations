@@ -221,8 +221,9 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
         await supabaseAdmin.from("qr_codes")
           .update({ scan_count: (curF.scan_count ?? 0) + 1 }).eq("id", qr.id);
       }
-      return { url };
+      return { url, hub: null as Hub };
     }
+
 
 
     const req = getRequest();
