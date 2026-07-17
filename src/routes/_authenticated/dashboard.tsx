@@ -1514,45 +1514,56 @@ function StaticQrModal({ onClose }: { onClose: () => void }) {
                 <label className={labelCls}>Subtitle
                   <input value={links.subtitle} onChange={(e) => setLinks({ ...links, subtitle: e.target.value })} className={inputCls} />
                 </label>
-                <div className="space-y-2">
-                  {links.items.map((it, idx) => (
-                    <div key={idx} className="grid grid-cols-[7rem_1fr_1fr_auto] gap-2 items-start">
-                      <select
-                        value={it.type}
-                        onChange={(e) => {
-                          const items = [...links.items]; items[idx] = { ...it, type: e.target.value }; setLinks({ ...links, items });
-                        }}
-                        className={inputCls}
-                      >
-                        <option value="website">Website</option>
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="phone">Phone</option>
-                        <option value="email">Email</option>
-                        <option value="maps">Maps</option>
-                        <option value="image">Image</option>
-                        <option value="video">Video</option>
-                        <option value="pdf">PDF</option>
-                      </select>
-                      <input
-                        value={it.label}
-                        onChange={(e) => { const items = [...links.items]; items[idx] = { ...it, label: e.target.value }; setLinks({ ...links, items }); }}
-                        placeholder="Label" className={inputCls}
-                      />
-                      <input
-                        value={it.url}
-                        onChange={(e) => { const items = [...links.items]; items[idx] = { ...it, url: e.target.value }; setLinks({ ...links, items }); }}
-                        placeholder="URL" className={inputCls}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setLinks({ ...links, items: links.items.filter((_, i) => i !== idx) })}
-                        className="h-10 w-10 grid place-items-center rounded-lg border border-border hover:bg-accent"
-                        aria-label="Remove"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                <div className="space-y-3">
+                  {links.items.map((it, idx) => {
+                    const t = (it.type || "website") as LinkType;
+                    const meta = INPUT_META[t] ?? INPUT_META.link;
+                    return (
+                    <div key={idx} className="rounded-lg border border-border p-2 space-y-2">
+                      <div className="grid grid-cols-[7rem_1fr_auto] gap-2 items-start">
+                        <select
+                          value={it.type}
+                          onChange={(e) => {
+                            const items = [...links.items]; items[idx] = { ...it, type: e.target.value, url: "" }; setLinks({ ...links, items });
+                          }}
+                          className={inputCls}
+                        >
+                          <option value="website">Website</option>
+                          <option value="whatsapp">WhatsApp</option>
+                          <option value="phone">Phone</option>
+                          <option value="email">Email</option>
+                          <option value="maps">Maps</option>
+                          <option value="image">Image</option>
+                          <option value="video">Video</option>
+                          <option value="pdf">PDF</option>
+                        </select>
+                        <input
+                          value={it.label}
+                          onChange={(e) => { const items = [...links.items]; items[idx] = { ...it, label: e.target.value }; setLinks({ ...links, items }); }}
+                          placeholder="Button label (e.g. Chat with us)" className={inputCls}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setLinks({ ...links, items: links.items.filter((_, i) => i !== idx) })}
+                          className="h-10 w-10 grid place-items-center rounded-lg border border-border hover:bg-accent"
+                          aria-label="Remove"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div>
+                        <input
+                          value={it.url}
+                          inputMode={meta.inputMode}
+                          onChange={(e) => { const items = [...links.items]; items[idx] = { ...it, url: e.target.value }; setLinks({ ...links, items }); }}
+                          placeholder={meta.placeholder}
+                          className={inputCls}
+                        />
+                        <p className="text-[11px] text-muted-foreground mt-1">{meta.label}{meta.help ? ` — ${meta.help}` : ""}</p>
+                      </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   <button
                     type="button"
                     onClick={() => setLinks({ ...links, items: [...links.items, { label: "", url: "https://", type: "website" }] })}
