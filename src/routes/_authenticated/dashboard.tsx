@@ -158,6 +158,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [staticOpen, setStaticOpen] = useState(false);
   const [statsFor, setStatsFor] = useState<Qr | null>(null);
   const [destsFor, setDestsFor] = useState<Qr | null>(null);
   const [email, setEmail] = useState("");
