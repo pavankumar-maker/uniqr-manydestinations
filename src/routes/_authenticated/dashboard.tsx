@@ -1049,3 +1049,52 @@ function UploadFileModal({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+
+function LocateButton({ onLocate }: { onLocate: (v: string) => void }) {
+  const [loading, setLoading] = useState(false);
+  const locate = () => {
+    if (!("geolocation" in navigator)) {
+      toast.error("Geolocation not supported on this device");
+      return;
+    }
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const coords = `${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+            { headers: { Accept: "application/json" } },
+          );
+          if (res.ok) {
+            const j = (await res.json()) as { display_name?: string };
+            onLocate(j.display_name?.trim() || coords);
+            toast.success("Current location filled");
+            return;
+          }
+        } catch { /* fall through */ }
+        onLocate(coords);
+        toast.success("Location coordinates filled");
+      },
+      (err) => {
+        toast.error(err.code === err.PERMISSION_DENIED ? "Location permission denied" : "Couldn't get location");
+        setLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+    // ensure spinner clears after callback resolves
+    setTimeout(() => setLoading(false), 12000);
+  };
+  return (
+    <button
+      type="button"
+      onClick={locate}
+      disabled={loading}
+      className="mt-1.5 inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs hover:bg-accent disabled:opacity-60"
+    >
+      {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
+      Use my current location
+    </button>
+  );
+}
