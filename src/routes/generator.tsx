@@ -149,6 +149,30 @@ function Generator() {
       <section className="mx-auto max-w-7xl px-6 py-12 grid lg:grid-cols-[1fr_420px] gap-8">
         {/* Left */}
         <div className="space-y-8">
+          {/* Mode toggle */}
+          <div>
+            <div className="text-sm font-medium mb-3">QR Mode</div>
+            <div className="inline-flex p-1 rounded-xl border border-border bg-card/60">
+              <button
+                onClick={() => setMode("static")}
+                className={`px-4 h-9 rounded-lg text-sm transition ${mode === "static" ? "bg-glow text-primary-foreground shadow-brand" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Static
+              </button>
+              <button
+                onClick={() => setMode("dynamic")}
+                className={`px-4 h-9 rounded-lg text-sm inline-flex items-center gap-1.5 transition ${mode === "dynamic" ? "bg-glow text-primary-foreground shadow-brand" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <Zap className="w-3.5 h-3.5" /> Dynamic
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {mode === "static"
+                ? "Encodes content directly into the QR. Works offline, cannot be edited or tracked."
+                : "Encodes a short link that redirects to your target. Editable anytime, with scan analytics."}
+            </p>
+          </div>
+
           {/* Type selector */}
           <div>
             <div className="text-sm font-medium mb-3">QR Type</div>
