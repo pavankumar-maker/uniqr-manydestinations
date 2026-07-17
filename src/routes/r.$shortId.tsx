@@ -92,7 +92,7 @@ function HubOrFallback() {
 
       <div className="relative max-w-md mx-auto px-4 pb-16">
         {/* Cover banner */}
-        <div className="relative mt-4 h-44 rounded-3xl overflow-hidden shadow-xl ring-1 ring-black/5">
+        <div className="relative mt-4 h-28 sm:h-36 rounded-3xl overflow-hidden shadow-xl ring-1 ring-black/5">
           <div className="absolute inset-0" style={{ background: cover }} />
           {/* Decorative shapes */}
           <div className="absolute -top-10 -right-8 w-40 h-40 rounded-full bg-white/10 backdrop-blur-sm" />
@@ -108,9 +108,9 @@ function HubOrFallback() {
         </div>
 
         {/* Avatar */}
-        <div className="-mt-14 flex justify-center">
+        <div className="-mt-10 flex justify-center">
           <div
-            className="w-24 h-24 rounded-3xl grid place-items-center text-3xl font-bold text-white shadow-2xl ring-4 ring-white"
+            className="w-20 h-20 rounded-2xl grid place-items-center text-2xl font-bold text-white shadow-2xl ring-4 ring-white"
             style={{ background: `linear-gradient(135deg, ${g[0]}, ${g[1]})` }}
           >
             {initials}
