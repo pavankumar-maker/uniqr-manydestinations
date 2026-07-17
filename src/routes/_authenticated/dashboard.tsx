@@ -130,6 +130,23 @@ function buildUrl(type: LinkType, raw: string, extras: Extras = {}): string | nu
   }
 }
 
+const PUBLISHED_QR_ORIGIN = "https://doc-to-pro-hub.lovable.app";
+
+function getPublicQrOrigin() {
+  if (typeof window === "undefined") return PUBLISHED_QR_ORIGIN;
+  const { origin, hostname } = window.location;
+  if (hostname === "localhost" || hostname.endsWith(".lovableproject.com") || hostname.includes("preview--")) {
+    return PUBLISHED_QR_ORIGIN;
+  }
+  return origin;
+}
+
+function getQrScanValue(q: Qr, shortUrl: string) {
+  const mode = q.routing_mode ?? "single";
+  if (mode === "single" && q.target_url && !q.file_path) return q.target_url;
+  return shortUrl;
+}
+
 
 
 function Dashboard() {
@@ -180,7 +197,7 @@ function Dashboard() {
     navigate({ to: "/" });
   }
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const origin = getPublicQrOrigin();
 
   return (
     <div className="min-h-dvh bg-background">
@@ -296,6 +313,7 @@ function Dashboard() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((q) => {
               const shortUrl = `${origin}/r/${q.short_id}`;
+              const scanValue = getQrScanValue(q, shortUrl);
               return (
                 <div
                   key={q.id}
@@ -324,15 +342,15 @@ function Dashboard() {
 
                   <div className="mt-4 flex items-center gap-4">
                     <div className="rounded-lg bg-white p-2">
-                      <QRCodeSVG value={shortUrl} size={96} fgColor={q.fg_color} bgColor={q.bg_color} />
+                      <QRCodeSVG value={scanValue} size={96} fgColor={q.fg_color} bgColor={q.bg_color} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-2xl font-display font-semibold">{q.scan_count}</div>
                       <div className="text-xs text-muted-foreground">total scans</div>
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText(shortUrl);
-                          toast.success("Short link copied");
+                          navigator.clipboard.writeText(scanValue);
+                          toast.success("QR link copied");
                         }}
                         className="mt-2 text-xs text-primary inline-flex items-center gap-1 hover:underline"
                       >
@@ -369,7 +387,7 @@ function Dashboard() {
                     >
                       <BarChart3 className="w-3.5 h-3.5" /> Stats
                     </button>
-                    <DownloadMenu qr={q} shortUrl={shortUrl} />
+                    <DownloadMenu qr={q} shortUrl={shortUrl} scanValue={scanValue} />
                   </div>
 
                   <div className="mt-2 flex items-center gap-2">
@@ -381,7 +399,7 @@ function Dashboard() {
                       {q.is_active ? "Pause" : "Activate"}
                     </button>
                     <a
-                      href={shortUrl}
+                      href={scanValue}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-border hover:bg-accent"
@@ -894,7 +912,7 @@ function Stat({ label, value }: { label: string | number; value: number }) {
   );
 }
 
-function DownloadMenu({ qr, shortUrl }: { qr: Qr; shortUrl: string }) {
+function DownloadMenu({ qr, shortUrl, scanValue }: { qr: Qr; shortUrl: string; scanValue: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -907,7 +925,7 @@ function DownloadMenu({ qr, shortUrl }: { qr: Qr; shortUrl: string }) {
   }, [open]);
 
   async function png() {
-    const dataUrl = await QRCode.toDataURL(shortUrl, {
+    const dataUrl = await QRCode.toDataURL(scanValue, {
       errorCorrectionLevel: "H", margin: 2, width: 1024,
       color: { dark: qr.fg_color, light: qr.bg_color },
     });
@@ -915,7 +933,7 @@ function DownloadMenu({ qr, shortUrl }: { qr: Qr; shortUrl: string }) {
     setOpen(false);
   }
   async function svg() {
-    const s = await QRCode.toString(shortUrl, {
+    const s = await QRCode.toString(scanValue, {
       type: "svg", errorCorrectionLevel: "H", margin: 2,
       color: { dark: qr.fg_color, light: qr.bg_color },
     });
@@ -925,7 +943,7 @@ function DownloadMenu({ qr, shortUrl }: { qr: Qr; shortUrl: string }) {
     setOpen(false);
   }
   async function pdf() {
-    const dataUrl = await QRCode.toDataURL(shortUrl, {
+    const dataUrl = await QRCode.toDataURL(scanValue, {
       errorCorrectionLevel: "H", margin: 2, width: 1024,
       color: { dark: qr.fg_color, light: qr.bg_color },
     });
@@ -937,7 +955,7 @@ function DownloadMenu({ qr, shortUrl }: { qr: Qr; shortUrl: string }) {
     doc.addImage(dataUrl, "PNG", (pageW - size) / 2, 100, size, size);
     doc.setFontSize(10);
     doc.setTextColor(120);
-    doc.text(shortUrl, pageW / 2, 100 + size + 30, { align: "center" });
+    doc.text(scanValue, pageW / 2, 100 + size + 30, { align: "center" });
     doc.save(`${qr.name || "qr"}.pdf`);
     setOpen(false);
   }
