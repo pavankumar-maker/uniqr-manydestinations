@@ -36,7 +36,7 @@ export function SiteHeader() {
             <QrCode className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="font-display font-semibold text-lg tracking-tight">
-            NxtQR<span className="text-gradient">.</span>
+            UniQR<span className="text-gradient">.</span>
           </span>
         </Link>
 

@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyProfile, updateMyProfile, getMyStats } from "@/lib/profile.functions";
 
 export const Route = createFileRoute("/_authenticated/profile")({
-  head: () => ({ meta: [{ title: "Profile — NxtQR" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Profile — UniQR" }, { name: "robots", content: "noindex" }] }),
   component: ProfilePage,
 });
 
@@ -79,7 +79,7 @@ function ProfilePage() {
             <div className="w-8 h-8 rounded-lg bg-glow grid place-items-center shadow-brand">
               <QrCode className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-semibold">NxtQR</span>
+            <span className="font-display font-semibold">UniQR</span>
           </Link>
         </div>
       </header>

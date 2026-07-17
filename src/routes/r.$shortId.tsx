@@ -19,8 +19,8 @@ export const Route = createFileRoute("/r/$shortId")({
   errorComponent: () => <NotFoundPage />,
   head: () => ({
     meta: [
-      { title: "Connect · NxtQR" },
-      { name: "description", content: "All links in one place, powered by NxtQR." },
+      { title: "Connect · UniQR" },
+      { name: "description", content: "All links in one place, powered by UniQR." },
     ],
   }),
 });
@@ -247,7 +247,7 @@ function HubOrFallback() {
         {/* Footer */}
         <div className="mt-10 flex items-center justify-center gap-2 text-xs text-slate-400">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400" />
-          Powered by <span className="font-semibold text-slate-600">NxtQR</span>
+          Powered by <span className="font-semibold text-slate-600">UniQR</span>
         </div>
       </div>
     </div>
@@ -260,7 +260,7 @@ function NotFoundPage() {
       <div>
         <h1 className="text-3xl font-display font-semibold">Link unavailable</h1>
         <p className="mt-2 text-muted-foreground">This QR code is inactive or does not exist.</p>
-        <a href="/" className="mt-6 inline-block text-primary underline">Back to NxtQR</a>
+        <a href="/" className="mt-6 inline-block text-primary underline">Back to UniQR</a>
       </div>
     </div>
   );

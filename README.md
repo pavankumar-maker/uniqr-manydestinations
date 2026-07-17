@@ -1,4 +1,4 @@
-# NxtQR — Unified QR Management Platform
+# UniQR — Unified QR Management Platform
 
 Production-ready SaaS for generating, customizing, managing, and tracking
 **Static** and **Dynamic** QR codes with multi-destination routing, scan

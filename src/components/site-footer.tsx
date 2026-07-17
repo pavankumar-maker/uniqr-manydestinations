@@ -9,7 +9,7 @@ export function SiteFooter() {
             <div className="w-8 h-8 rounded-lg bg-glow grid place-items-center">
               <QrCode className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-semibold">NxtQR</span>
+            <span className="font-display font-semibold">UniQR</span>
           </div>
           <p className="mt-4 text-sm text-muted-foreground max-w-sm">
             Enterprise digital identity & smart QR management. Generate, customize, and track every scan.
@@ -34,7 +34,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border/60">
         <div className="mx-auto max-w-7xl px-6 py-6 text-xs text-muted-foreground flex flex-wrap justify-between gap-2">
-          <span>© {new Date().getFullYear()} NxtQR Platform. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} UniQR Platform. All rights reserved.</span>
           <span>Built for NxtGenSec Development Internship 2026.</span>
         </div>
       </div>

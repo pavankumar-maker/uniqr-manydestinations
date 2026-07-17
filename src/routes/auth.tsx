@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
-    meta: [{ title: "Sign in — NxtQR" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Sign in — UniQR" }, { name: "robots", content: "noindex" }],
   }),
   component: AuthPage,
 });
@@ -72,7 +72,7 @@ function AuthPage() {
           <div className="w-9 h-9 rounded-lg bg-glow grid place-items-center shadow-brand">
             <QrCode className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-display font-semibold text-lg">NxtQR</span>
+          <span className="font-display font-semibold text-lg">UniQR</span>
         </Link>
         <div>
           <h2 className="font-display text-3xl font-semibold leading-tight">
@@ -82,7 +82,7 @@ function AuthPage() {
             Generate, manage, customize, and track static & dynamic QR codes with real-time analytics.
           </p>
         </div>
-        <p className="text-xs text-muted-foreground">© NxtQR — NxtGenSec Intern Project</p>
+        <p className="text-xs text-muted-foreground">© UniQR — NxtGenSec Intern Project</p>
       </div>
 
       <div className="flex items-center justify-center p-6">

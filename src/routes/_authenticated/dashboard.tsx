@@ -16,7 +16,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — NxtQR" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — UniQR" }, { name: "robots", content: "noindex" }] }),
   component: Dashboard,
 });
 
@@ -212,7 +212,7 @@ function Dashboard() {
             <div className="w-8 h-8 shrink-0 rounded-lg bg-glow grid place-items-center shadow-brand" aria-hidden>
               <QrCode className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-semibold truncate">NxtQR</span>
+            <span className="font-display font-semibold truncate">UniQR</span>
             <span className="text-xs text-muted-foreground ml-2 hidden sm:inline truncate">/ Dashboard</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -967,7 +967,7 @@ function DownloadMenu({ qr, shortUrl, scanValue }: { qr: Qr; shortUrl: string; s
     const pageW = doc.internal.pageSize.getWidth();
     const size = 320;
     doc.setFontSize(18);
-    doc.text(qr.name || "NxtQR", pageW / 2, 60, { align: "center" });
+    doc.text(qr.name || "UniQR", pageW / 2, 60, { align: "center" });
     doc.addImage(dataUrl, "PNG", (pageW - size) / 2, 100, size, size);
     doc.setFontSize(10);
     doc.setTextColor(120);
@@ -1304,14 +1304,14 @@ function StaticQrModal({ onClose }: { onClose: () => void }) {
     if (!canRender) return;
     const dataUrl = await QRCode.toDataURL(value, { width: size, margin: 2, color: { dark: fg, light: bg } });
     const a = document.createElement("a");
-    a.href = dataUrl; a.download = `nxtqr-static-${kind}.png`; a.click();
+    a.href = dataUrl; a.download = `uniqr-static-${kind}.png`; a.click();
   }
   function downloadSvg() {
     if (!svgRef.current) return;
     const svg = svgRef.current.outerHTML;
     const blob = new Blob([svg], { type: "image/svg+xml" });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = `nxtqr-static-${kind}.svg`; a.click();
+    a.href = URL.createObjectURL(blob); a.download = `uniqr-static-${kind}.svg`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
   async function downloadPdf() {
@@ -1320,11 +1320,11 @@ function StaticQrModal({ onClose }: { onClose: () => void }) {
     const pdf = new jsPDF({ unit: "pt", format: "a4" });
     const w = 320; const x = (pdf.internal.pageSize.getWidth() - w) / 2;
     pdf.setFont("helvetica", "bold"); pdf.setFontSize(18);
-    pdf.text("NxtQR — Static QR", pdf.internal.pageSize.getWidth() / 2, 60, { align: "center" });
+    pdf.text("UniQR — Static QR", pdf.internal.pageSize.getWidth() / 2, 60, { align: "center" });
     pdf.addImage(dataUrl, "PNG", x, 100, w, w);
     pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
     pdf.text(`Type: ${kind}`, pdf.internal.pageSize.getWidth() / 2, 460, { align: "center" });
-    pdf.save(`nxtqr-static-${kind}.pdf`);
+    pdf.save(`uniqr-static-${kind}.pdf`);
   }
 
   const inputCls = "mt-1 w-full h-10 px-3 rounded-lg bg-background border border-border text-sm";
