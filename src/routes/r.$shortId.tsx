@@ -69,6 +69,7 @@ const GRADIENTS = [
 
 function HubOrFallback() {
   const { hub, notFound } = Route.useLoaderData();
+  const [viewer, setViewer] = useState<{ type: "image" | "video" | "pdf"; url: string; label: string } | null>(null);
   if (notFound || !hub) return <NotFoundPage />;
 
   const g = GRADIENTS[hash(hub.name) % GRADIENTS.length];
