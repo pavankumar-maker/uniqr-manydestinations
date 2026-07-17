@@ -167,6 +167,7 @@ export const updateDestination = createServerFn({ method: "POST" })
       device_filter: z.enum(DEVICE_FILTERS).optional(),
       priority: z.number().int().min(0).max(1000).optional(),
       is_active: z.boolean().optional(),
+      link_type: z.enum(LINK_TYPES).optional(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
