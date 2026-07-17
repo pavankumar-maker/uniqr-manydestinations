@@ -86,16 +86,16 @@ function HubOrFallback() {
   };
 
   return (
-    <div className="min-h-dvh relative overflow-hidden bg-slate-50">
+    <div className="min-h-dvh relative overflow-x-hidden bg-slate-50">
       {/* Ambient wash */}
       <div
         className="absolute inset-x-0 top-0 h-80 opacity-40 blur-3xl pointer-events-none"
         style={{ background: cover }}
       />
 
-      <div className="relative max-w-md mx-auto px-4 pb-16">
+      <div className="relative max-w-md mx-auto px-4 pb-16 pt-3">
         {/* Cover banner */}
-        <div className="relative mt-4 h-28 sm:h-36 rounded-3xl overflow-hidden shadow-xl ring-1 ring-black/5">
+        <div className="relative h-24 sm:h-28 rounded-[1.4rem] overflow-hidden shadow-lg ring-1 ring-black/5">
           <div className="absolute inset-0" style={{ background: cover }} />
           {/* Decorative shapes */}
           <div className="absolute -top-10 -right-8 w-40 h-40 rounded-full bg-white/10 backdrop-blur-sm" />
@@ -110,21 +110,19 @@ function HubOrFallback() {
           </button>
         </div>
 
-        {/* Avatar */}
-        <div className="-mt-10 flex justify-center">
-          <div
-            className="w-20 h-20 rounded-2xl grid place-items-center text-2xl font-bold text-white shadow-2xl ring-4 ring-white"
-            style={{ background: `linear-gradient(135deg, ${g[0]}, ${g[1]})` }}
-          >
-            {initials}
+        {/* Identity card */}
+        <div className="relative z-10 -mt-5 rounded-[1.4rem] bg-white px-4 pb-5 pt-12 text-center shadow-md ring-1 ring-slate-200">
+          <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
+            <div
+              className="h-20 w-20 rounded-2xl grid place-items-center text-2xl font-bold text-white shadow-xl ring-4 ring-white"
+              style={{ background: `linear-gradient(135deg, ${g[0]}, ${g[1]})` }}
+            >
+              {initials}
+            </div>
           </div>
-        </div>
-
-        {/* Identity */}
-        <div className="mt-4 text-center">
-          <div className="flex items-center justify-center gap-1.5">
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{hub.name}</h1>
-            <BadgeCheck className="w-5 h-5 text-sky-500" />
+          <div className="flex min-w-0 items-start justify-center gap-1.5 px-2">
+            <h1 className="max-w-full break-words text-2xl font-semibold leading-tight tracking-tight text-slate-900">{hub.name}</h1>
+            <BadgeCheck className="mt-1 h-5 w-5 shrink-0 text-sky-500" />
           </div>
           <p className="mt-1 text-sm text-slate-500">Tap a link below to connect</p>
         </div>
