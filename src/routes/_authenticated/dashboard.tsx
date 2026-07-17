@@ -37,6 +37,86 @@ const LINK_TYPE_OPTIONS = [
   "linkedin", "tiktok", "telegram", "email", "phone", "maps", "upi", "file",
 ] as const;
 
+type LinkType = (typeof LINK_TYPE_OPTIONS)[number];
+
+const INPUT_META: Record<LinkType, { label: string; placeholder: string; help?: string; inputMode?: "text" | "tel" | "email" | "url" | "numeric" }> = {
+  link:      { label: "URL",             placeholder: "https://example.com",         inputMode: "url" },
+  website:   { label: "Website URL",     placeholder: "https://example.com",         inputMode: "url" },
+  whatsapp:  { label: "WhatsApp number", placeholder: "+91 98765 43210",             help: "Include country code. We'll open a WhatsApp chat.", inputMode: "tel" },
+  facebook:  { label: "Facebook URL / username", placeholder: "yourpage or https://facebook.com/yourpage" },
+  instagram: { label: "Instagram username / URL", placeholder: "@yourhandle" },
+  twitter:   { label: "X / Twitter username or URL", placeholder: "@yourhandle" },
+  youtube:   { label: "YouTube URL",     placeholder: "https://youtube.com/@channel", inputMode: "url" },
+  linkedin:  { label: "LinkedIn URL",    placeholder: "https://linkedin.com/in/you", inputMode: "url" },
+  tiktok:    { label: "TikTok username / URL", placeholder: "@yourhandle" },
+  telegram:  { label: "Telegram username / URL", placeholder: "@yourhandle" },
+  email:     { label: "Email address",   placeholder: "you@example.com",             inputMode: "email" },
+  phone:     { label: "Phone number",    placeholder: "+91 98765 43210",             inputMode: "tel" },
+  maps:      { label: "Address or Google Maps URL", placeholder: "221B Baker Street, London" },
+  upi:       { label: "UPI ID",          placeholder: "yourname@upi",                help: "Opens the user's UPI app to pay you." },
+  file:      { label: "File URL",        placeholder: "https://…", inputMode: "url" },
+};
+
+function digits(v: string) { return v.replace(/[^\d]/g, ""); }
+function ensureHttps(v: string) {
+  const t = v.trim();
+  if (!t) return "";
+  if (/^https?:\/\//i.test(t)) return t;
+  return `https://${t}`;
+}
+function isValidUrl(v: string) { try { new URL(v); return true; } catch { return false; } }
+function stripAt(v: string) { return v.trim().replace(/^@+/, ""); }
+
+function buildUrl(type: LinkType, raw: string): string | null {
+  const v = raw.trim();
+  if (!v) return null;
+  switch (type) {
+    case "whatsapp": {
+      const d = digits(v);
+      return d.length >= 6 ? `https://wa.me/${d}` : null;
+    }
+    case "phone": {
+      const d = digits(v);
+      return d.length >= 4 ? `tel:${v.startsWith("+") ? "+" : ""}${d}` : null;
+    }
+    case "email": {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? `mailto:${v}` : null;
+    }
+    case "upi": {
+      return /^[\w.\-]+@[\w.\-]+$/.test(v) ? `upi://pay?pa=${encodeURIComponent(v)}` : null;
+    }
+    case "instagram": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://instagram.com/${stripAt(v)}`;
+    }
+    case "twitter": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://x.com/${stripAt(v)}`;
+    }
+    case "tiktok": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://tiktok.com/@${stripAt(v)}`;
+    }
+    case "telegram": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://t.me/${stripAt(v)}`;
+    }
+    case "facebook": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://facebook.com/${stripAt(v)}`;
+    }
+    case "maps": {
+      if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v)}`;
+    }
+    default: {
+      const u = ensureHttps(v);
+      return isValidUrl(u) ? u : null;
+    }
+  }
+}
+
+
 function Dashboard() {
   const qc = useQueryClient();
   const navigate = useNavigate();
