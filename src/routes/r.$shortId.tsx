@@ -43,7 +43,7 @@ function HubOrFallback() {
   const { hub, notFound } = Route.useLoaderData();
   if (notFound || !hub) return <NotFoundPage />;
   return (
-    <div className="min-h-screen py-10 px-5" style={{ backgroundColor: hub.bg }}>
+    <div className="min-h-dvh py-10 px-5" style={{ backgroundColor: hub.bg }}>
       <div className="max-w-md mx-auto">
         <div
           className="w-20 h-20 rounded-2xl mx-auto grid place-items-center text-2xl font-bold shadow-lg"
@@ -97,7 +97,7 @@ function HubOrFallback() {
 
 function NotFoundPage() {
   return (
-    <div className="min-h-screen grid place-items-center bg-background text-center px-6">
+    <div className="min-h-dvh grid place-items-center bg-background text-center px-6">
       <div>
         <h1 className="text-3xl font-display font-semibold">Link unavailable</h1>
         <p className="mt-2 text-muted-foreground">This QR code is inactive or does not exist.</p>
