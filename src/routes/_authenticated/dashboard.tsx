@@ -1270,8 +1270,27 @@ function StaticQrModal({ onClose }: { onClose: () => void }) {
         p.set("cu", "INR");
         return `upi://pay?${p.toString()}`;
       }
+      case "whatsapp": {
+        const num = whatsapp.number.replace(/[^\d]/g, "");
+        if (!num) return "";
+        return `https://wa.me/${num}${whatsapp.message ? `?text=${encodeURIComponent(whatsapp.message)}` : ""}`;
+      }
+      case "maps": {
+        if (maps.lat && maps.lng) return `https://www.google.com/maps?q=${encodeURIComponent(maps.lat)},${encodeURIComponent(maps.lng)}`;
+        if (maps.query) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(maps.query)}`;
+        return "";
+      }
+      case "image":
+      case "video":
+      case "pdf": return fileUrl.trim();
+      case "links": {
+        const cleaned = links.items.filter((it) => it.url && it.url !== "https://");
+        if (cleaned.length === 0) return "";
+        const payload = { title: links.title || undefined, subtitle: links.subtitle || undefined, items: cleaned };
+        return `${origin}/s?d=${b64urlEncode(JSON.stringify(payload))}`;
+      }
     }
-  }, [kind, url, text, wifi, vcard, emailF, phone, sms, upi]);
+  }, [kind, url, text, wifi, vcard, emailF, phone, sms, upi, whatsapp, maps, fileUrl, links]);
 
   const canRender = !!value && value.length > 0;
 
