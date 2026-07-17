@@ -1,8 +1,10 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   Globe, MessageCircle, Facebook, Instagram, Twitter, Youtube, Linkedin,
   Mail, Phone, MapPin, CreditCard, FileText, Link as LinkIcon, Send,
   BadgeCheck, Share2, ExternalLink, Image as ImageIcon, Video as VideoIcon,
+  X, Download, Play,
 } from "lucide-react";
 import { resolveShortAndTrack } from "@/lib/qr.functions";
 
@@ -67,6 +69,7 @@ const GRADIENTS = [
 
 function HubOrFallback() {
   const { hub, notFound } = Route.useLoaderData();
+  const [viewer, setViewer] = useState<{ type: "image" | "video" | "pdf"; url: string; label: string } | null>(null);
   if (notFound || !hub) return <NotFoundPage />;
 
   const g = GRADIENTS[hash(hub.name) % GRADIENTS.length];
@@ -134,6 +137,50 @@ function HubOrFallback() {
           {hub.links.map((l: { label: string; url: string; type: string }, i: number) => {
             const meta = META[l.type] ?? META.link;
             const Icon = meta.icon;
+            const isMedia = l.type === "image" || l.type === "video" || l.type === "pdf";
+
+            if (isMedia) {
+              return (
+                <button
+                  key={i}
+                  onClick={() => setViewer({ type: l.type as "image" | "video" | "pdf", url: l.url, label: l.label || meta.label })}
+                  className="group relative block w-full text-left rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-lg ring-1 ring-slate-200 hover:ring-slate-300 transition-all hover:-translate-y-0.5"
+                >
+                  {/* Media preview */}
+                  <div className="relative w-full aspect-[16/9] bg-slate-100 overflow-hidden">
+                    {l.type === "image" && (
+                      <img src={l.url} alt={l.label || meta.label} className="w-full h-full object-cover" loading="lazy" />
+                    )}
+                    {l.type === "video" && (
+                      <>
+                        <video src={l.url} className="w-full h-full object-cover" preload="metadata" muted playsInline />
+                        <div className="absolute inset-0 grid place-items-center bg-black/25">
+                          <span className="w-14 h-14 rounded-full bg-white/95 grid place-items-center shadow-xl">
+                            <Play className="w-6 h-6 text-slate-900 fill-slate-900 ml-0.5" />
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {l.type === "pdf" && (
+                      <div className={`w-full h-full grid place-items-center bg-gradient-to-br ${meta.grad} text-white`}>
+                        <FileText className="w-14 h-14 opacity-90" />
+                      </div>
+                    )}
+                  </div>
+                  {/* Meta bar */}
+                  <div className="flex items-center gap-3 px-3 py-2.5">
+                    <span className={`w-9 h-9 shrink-0 rounded-lg grid place-items-center text-white shadow-sm bg-gradient-to-br ${meta.grad}`}>
+                      <Icon className="w-4 h-4" />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-semibold text-slate-900 truncate">{l.label || meta.label}</span>
+                      <span className="block text-xs text-slate-500 truncate">Tap to {l.type === "image" ? "view" : l.type === "video" ? "play" : "open"}</span>
+                    </span>
+                  </div>
+                </button>
+              );
+            }
+
             return (
               <a
                 key={i}
@@ -142,15 +189,11 @@ function HubOrFallback() {
                 rel="noopener noreferrer"
                 className="group relative flex items-center gap-4 w-full pl-2 pr-4 py-2 rounded-2xl bg-white hover:bg-white shadow-sm hover:shadow-lg ring-1 ring-slate-200 hover:ring-slate-300 transition-all hover:-translate-y-0.5"
               >
-                <span
-                  className={`w-12 h-12 shrink-0 rounded-xl grid place-items-center text-white shadow-md bg-gradient-to-br ${meta.grad}`}
-                >
+                <span className={`w-12 h-12 shrink-0 rounded-xl grid place-items-center text-white shadow-md bg-gradient-to-br ${meta.grad}`}>
                   <Icon className="w-5 h-5" />
                 </span>
                 <span className="flex-1 min-w-0">
-                  <span className="block text-sm font-semibold text-slate-900 truncate">
-                    {l.label || meta.label}
-                  </span>
+                  <span className="block text-sm font-semibold text-slate-900 truncate">{l.label || meta.label}</span>
                   <span className="block text-xs text-slate-500 truncate">{meta.label}</span>
                 </span>
                 <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition" />
@@ -158,6 +201,50 @@ function HubOrFallback() {
             );
           })}
         </div>
+
+        {/* Fullscreen viewer */}
+        {viewer && (
+          <div
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex flex-col"
+            onClick={() => setViewer(null)}
+          >
+            <div className="flex items-center justify-between px-4 py-3 text-white">
+              <span className="text-sm font-medium truncate pr-4">{viewer.label}</span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={viewer.url}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-white/20 transition"
+                  aria-label="Download"
+                >
+                  <Download className="w-4 h-4" />
+                </a>
+                <button
+                  onClick={() => setViewer(null)}
+                  className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-white/20 transition"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+              {viewer.type === "image" && (
+                <img src={viewer.url} alt={viewer.label} className="max-w-full max-h-full object-contain rounded-lg" />
+              )}
+              {viewer.type === "video" && (
+                <video src={viewer.url} controls autoPlay playsInline className="max-w-full max-h-full rounded-lg bg-black" />
+              )}
+              {viewer.type === "pdf" && (
+                <iframe src={viewer.url} title={viewer.label} className="w-full h-full rounded-lg bg-white" />
+              )}
+            </div>
+          </div>
+        )}
+
 
         {/* Footer */}
         <div className="mt-10 flex items-center justify-center gap-2 text-xs text-slate-400">
