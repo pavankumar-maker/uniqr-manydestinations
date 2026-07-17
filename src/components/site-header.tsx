@@ -16,7 +16,7 @@ export function SiteHeader() {
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
           <a href="/#features" className="hover:text-foreground transition">Features</a>
           <a href="/#types" className="hover:text-foreground transition">QR Types</a>
-          <a href="/#pricing" className="hover:text-foreground transition">Pricing</a>
+          
           <Link to="/generator" className="hover:text-foreground transition">Generator</Link>
         </nav>
         <div className="flex items-center gap-3">

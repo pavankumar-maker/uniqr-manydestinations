@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight, BarChart3, Palette, Shield, Zap, Globe, Smartphone,
   CreditCard, MapPin, FileText, Image as ImageIcon, Video, MessageSquare,
-  Mail, Phone, Link2, Layers, Check,
+  Mail, Phone, Link2, Layers,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -44,11 +44,6 @@ const qrTypes = [
   { icon: Layers, name: "vCard" },
 ];
 
-const tiers = [
-  { name: "Starter", price: "Free", desc: "For individuals exploring QR.", features: ["5 dynamic QRs", "Basic analytics", "PNG/SVG export", "Community support"], cta: "Start free" },
-  { name: "Business", price: "$19", suffix: "/mo", featured: true, desc: "For growing teams and brands.", features: ["Unlimited dynamic QRs", "Advanced analytics", "Custom branding & logos", "Multi-link routing", "Priority support"], cta: "Start 14-day trial" },
-  { name: "Enterprise", price: "Custom", desc: "For organizations at scale.", features: ["SSO & SCIM", "Audit logs", "Bulk generation API", "Dedicated success manager", "99.99% SLA"], cta: "Talk to sales" },
-];
 
 function Landing() {
   return (
@@ -199,54 +194,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="mx-auto max-w-7xl px-6 py-24">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="text-sm font-medium text-accent">Pricing</div>
-          <h2 className="mt-3 text-4xl font-semibold">Simple plans that scale with you</h2>
-        </div>
-        <div className="mt-14 grid md:grid-cols-3 gap-5">
-          {tiers.map((t) => (
-            <div
-              key={t.name}
-              className={`relative rounded-2xl border p-8 ${
-                t.featured
-                  ? "border-primary/60 bg-card shadow-brand"
-                  : "border-border bg-card/60"
-              }`}
-            >
-              {t.featured && (
-                <span className="absolute -top-3 left-8 text-xs px-2 h-6 inline-flex items-center rounded-full bg-glow text-primary-foreground">
-                  Most popular
-                </span>
-              )}
-              <div className="font-display text-lg">{t.name}</div>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-semibold">{t.price}</span>
-                {t.suffix && <span className="text-muted-foreground">{t.suffix}</span>}
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground">{t.desc}</p>
-              <ul className="mt-6 space-y-3 text-sm">
-                {t.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <button
-                className={`mt-8 w-full h-11 rounded-xl font-medium transition ${
-                  t.featured
-                    ? "bg-glow text-primary-foreground hover:opacity-90"
-                    : "border border-border hover:bg-secondary"
-                }`}
-              >
-                {t.cta}
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* CTA */}
       <section className="mx-auto max-w-7xl px-6 pb-24">
