@@ -99,6 +99,7 @@ export type Database = {
           id: string
           is_active: boolean
           label: string
+          link_type: string
           priority: number
           qr_id: string
           target_url: string
@@ -111,6 +112,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           label?: string
+          link_type?: string
           priority?: number
           qr_id: string
           target_url: string
@@ -123,6 +125,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           label?: string
+          link_type?: string
           priority?: number
           qr_id?: string
           target_url?: string

@@ -25,11 +25,17 @@ type Destination = Awaited<ReturnType<typeof listDestinations>>[number];
 
 const ROUTING_MODES: { value: Qr["routing_mode"]; label: string; hint: string }[] = [
   { value: "single", label: "Single destination", hint: "Redirect all scans to the default URL." },
+  { value: "hub", label: "Multi-link hub", hint: "Show a landing page with all destinations as buttons (Website, WhatsApp, Facebook, etc.)." },
   { value: "rotation", label: "Round-robin", hint: "Cycle through destinations in order." },
   { value: "weighted", label: "Weighted A/B", hint: "Random split by weight." },
   { value: "device", label: "By device", hint: "Route by mobile / tablet / desktop." },
   { value: "priority", label: "By priority", hint: "Highest-priority active destination wins." },
 ];
+
+const LINK_TYPE_OPTIONS = [
+  "link", "website", "whatsapp", "facebook", "instagram", "twitter", "youtube",
+  "linkedin", "tiktok", "telegram", "email", "phone", "maps", "upi", "file",
+] as const;
 
 function Dashboard() {
   const qc = useQueryClient();
@@ -403,18 +409,19 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
   const [weight, setWeight] = useState(1);
   const [device, setDevice] = useState<Destination["device_filter"]>("any");
   const [priority, setPriority] = useState(0);
+  const [linkType, setLinkType] = useState<(typeof LINK_TYPE_OPTIONS)[number]>("website");
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["dests", qr.id] });
 
   const add = useMutation({
     mutationFn: () =>
       addDestination({
-        data: { qr_id: qr.id, label, target_url: url, weight, device_filter: device, priority },
+        data: { qr_id: qr.id, label, target_url: url, weight, device_filter: device, priority, link_type: linkType },
       }),
     onSuccess: () => {
       toast.success("Destination added");
       invalidate();
-      setLabel(""); setUrl("https://"); setWeight(1); setDevice("any"); setPriority(0);
+      setLabel(""); setUrl("https://"); setWeight(1); setDevice("any"); setPriority(0); setLinkType("website");
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
@@ -448,9 +455,15 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
         <div className="mt-5 rounded-xl border border-border p-4">
           <h3 className="text-sm font-medium">Add destination</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="block text-xs text-muted-foreground sm:col-span-2">Label (optional)
+            <label className="block text-xs text-muted-foreground">Link type (hub icon)
+              <select value={linkType} onChange={(e) => setLinkType(e.target.value as typeof linkType)}
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm capitalize">
+                {LINK_TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </label>
+            <label className="block text-xs text-muted-foreground">Label (optional)
               <input value={label} onChange={(e) => setLabel(e.target.value)}
-                placeholder="Variant A"
+                placeholder="Follow us on Instagram"
                 className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
             </label>
             <label className="block text-xs text-muted-foreground sm:col-span-2">URL

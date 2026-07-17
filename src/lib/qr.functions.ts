@@ -10,8 +10,9 @@ function makeShortId() {
   return s;
 }
 
-const ROUTING_MODES = ["single", "rotation", "weighted", "device", "priority"] as const;
+const ROUTING_MODES = ["single", "rotation", "weighted", "device", "priority", "hub"] as const;
 const DEVICE_FILTERS = ["any", "mobile", "tablet", "desktop"] as const;
+const LINK_TYPES = ["link", "website", "whatsapp", "facebook", "instagram", "twitter", "youtube", "linkedin", "tiktok", "telegram", "email", "phone", "maps", "upi", "file"] as const;
 
 const createSchema = z.object({
   name: z.string().min(1).max(80),
@@ -145,6 +146,7 @@ export const addDestination = createServerFn({ method: "POST" })
       weight: z.number().int().min(1).max(100).default(1),
       device_filter: z.enum(DEVICE_FILTERS).default("any"),
       priority: z.number().int().min(0).max(1000).default(0),
+      link_type: z.enum(LINK_TYPES).default("link"),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -165,6 +167,7 @@ export const updateDestination = createServerFn({ method: "POST" })
       device_filter: z.enum(DEVICE_FILTERS).optional(),
       priority: z.number().int().min(0).max(1000).optional(),
       is_active: z.boolean().optional(),
+      link_type: z.enum(LINK_TYPES).optional(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -190,10 +193,11 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: qr } = await supabaseAdmin
       .from("qr_codes")
-      .select("id, target_url, is_active, routing_mode, rotation_cursor, file_path")
+      .select("id, name, target_url, is_active, routing_mode, rotation_cursor, file_path, fg_color, bg_color")
       .eq("short_id", data.shortId)
       .maybeSingle();
-    if (!qr || !qr.is_active) return { url: null as string | null };
+    type Hub = { name: string; fg: string; bg: string; links: { label: string; url: string; type: string }[] } | null;
+    if (!qr || !qr.is_active) return { url: null as string | null, hub: null as Hub };
 
     // If this QR points to an uploaded file, sign it and short-circuit
     if (qr.file_path) {
@@ -217,8 +221,9 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
         await supabaseAdmin.from("qr_codes")
           .update({ scan_count: (curF.scan_count ?? 0) + 1 }).eq("id", qr.id);
       }
-      return { url };
+      return { url, hub: null as Hub };
     }
+
 
 
     const req = getRequest();
@@ -235,13 +240,44 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
     // Load destinations
     const { data: destsRaw } = await supabaseAdmin
       .from("qr_destinations")
-      .select("id, target_url, weight, device_filter, priority, is_active, created_at")
+      .select("id, label, target_url, weight, device_filter, priority, is_active, created_at, link_type")
       .eq("qr_id", qr.id)
       .eq("is_active", true);
     const dests = destsRaw ?? [];
 
     let chosen: string = qr.target_url ?? "";
     const mode = qr.routing_mode ?? "single";
+
+    // Hub mode — render a landing page with all destinations
+    if (mode === "hub") {
+      await supabaseAdmin.from("scan_events").insert({
+        qr_id: qr.id,
+        user_agent: req?.headers.get("user-agent") ?? null,
+        referrer: req?.headers.get("referer") ?? null,
+        device,
+      });
+      const { data: curH } = await supabaseAdmin
+        .from("qr_codes").select("scan_count").eq("id", qr.id).single();
+      if (curH) {
+        await supabaseAdmin.from("qr_codes")
+          .update({ scan_count: (curH.scan_count ?? 0) + 1 }).eq("id", qr.id);
+      }
+      const sorted = [...dests].sort((a, b) => b.priority - a.priority);
+      return {
+        url: null as string | null,
+        hub: {
+          name: qr.name ?? "Links",
+          fg: qr.fg_color ?? "#0B0B12",
+          bg: qr.bg_color ?? "#FFFFFF",
+          links: sorted.map((d) => ({
+            label: d.label || d.link_type || "Open",
+            url: d.target_url,
+            type: d.link_type ?? "link",
+          })),
+        } as Hub,
+      };
+    }
+
 
     if (dests.length > 0 && mode !== "single") {
       if (mode === "device") {
@@ -293,5 +329,5 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
         .eq("id", qr.id);
     }
 
-    return { url: chosen };
+    return { url: chosen, hub: null as Hub };
   });
