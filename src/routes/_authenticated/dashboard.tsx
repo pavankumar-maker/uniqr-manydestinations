@@ -693,3 +693,159 @@ function Stat({ label, value }: { label: string | number; value: number }) {
     </div>
   );
 }
+
+function DownloadMenu({ qr, shortUrl }: { qr: Qr; shortUrl: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+
+  async function png() {
+    const dataUrl = await QRCode.toDataURL(shortUrl, {
+      errorCorrectionLevel: "H", margin: 2, width: 1024,
+      color: { dark: qr.fg_color, light: qr.bg_color },
+    });
+    trigger(dataUrl, `${qr.name || "qr"}.png`);
+    setOpen(false);
+  }
+  async function svg() {
+    const s = await QRCode.toString(shortUrl, {
+      type: "svg", errorCorrectionLevel: "H", margin: 2,
+      color: { dark: qr.fg_color, light: qr.bg_color },
+    });
+    const url = URL.createObjectURL(new Blob([s], { type: "image/svg+xml" }));
+    trigger(url, `${qr.name || "qr"}.svg`);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setOpen(false);
+  }
+  async function pdf() {
+    const dataUrl = await QRCode.toDataURL(shortUrl, {
+      errorCorrectionLevel: "H", margin: 2, width: 1024,
+      color: { dark: qr.fg_color, light: qr.bg_color },
+    });
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const size = 320;
+    doc.setFontSize(18);
+    doc.text(qr.name || "NxtQR", pageW / 2, 60, { align: "center" });
+    doc.addImage(dataUrl, "PNG", (pageW - size) / 2, 100, size, size);
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    doc.text(shortUrl, pageW / 2, 100 + size + 30, { align: "center" });
+    doc.save(`${qr.name || "qr"}.pdf`);
+    setOpen(false);
+  }
+  function trigger(href: string, filename: string) {
+    const a = document.createElement("a");
+    a.href = href; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-xs hover:bg-accent"
+      >
+        <Download className="w-3.5 h-3.5" /> Export
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-20 w-32 rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+          <button onClick={png} className="w-full text-left px-3 py-2 text-xs hover:bg-accent">PNG</button>
+          <button onClick={svg} className="w-full text-left px-3 py-2 text-xs hover:bg-accent">SVG</button>
+          <button onClick={pdf} className="w-full text-left px-3 py-2 text-xs hover:bg-accent">PDF</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UploadFileModal({ onClose }: { onClose: () => void }) {
+  const qc = useQueryClient();
+  const [name, setName] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit() {
+    if (!file || !name.trim()) return;
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("File exceeds 25 MB limit");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data: userRes } = await supabase.auth.getUser();
+      const uid = userRes.user?.id;
+      if (!uid) throw new Error("Not signed in");
+      const clean = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 120);
+      const path = `${uid}/${crypto.randomUUID()}-${clean}`;
+      const { error: upErr } = await supabase.storage.from("qr-files").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
+      if (upErr) throw new Error(upErr.message);
+      await createQr({
+        data: {
+          name: name.trim(),
+          file_path: path,
+          file_mime: file.type || "application/octet-stream",
+          file_name: file.name,
+        },
+      });
+      toast.success("File QR created");
+      qc.invalidateQueries({ queryKey: ["qrs"] });
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur grid place-items-center p-4">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6">
+        <h2 className="font-display text-xl font-semibold">Upload file QR</h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          Upload a PDF, image, or video (up to 25 MB). Scanning the QR opens the file via a secure link.
+        </p>
+        <div className="mt-4 space-y-3">
+          <label className="block text-xs text-muted-foreground">Name
+            <input value={name} onChange={(e) => setName(e.target.value)}
+              placeholder="Menu — Fall 2026"
+              className="mt-1 w-full h-10 px-3 rounded-lg bg-background border border-border text-sm" />
+          </label>
+          <label className="block text-xs text-muted-foreground">File
+            <input
+              type="file"
+              accept="application/pdf,image/*,video/*"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="mt-1 w-full text-xs file:mr-3 file:h-9 file:px-3 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+            />
+          </label>
+          {file && (
+            <div className="text-xs text-muted-foreground">
+              {file.name} · {(file.size / 1024 / 1024).toFixed(2)} MB
+            </div>
+          )}
+        </div>
+        <div className="mt-6 flex gap-2 justify-end">
+          <button onClick={onClose} className="h-10 px-4 rounded-lg border border-border text-sm">Cancel</button>
+          <button
+            disabled={busy || !file || !name.trim()}
+            onClick={submit}
+            className="h-10 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-60"
+          >
+            {busy ? "Uploading…" : "Create QR"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
