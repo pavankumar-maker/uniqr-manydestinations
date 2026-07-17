@@ -206,7 +206,7 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
       .eq("is_active", true);
     const dests = destsRaw ?? [];
 
-    let chosen: string = qr.target_url;
+    let chosen: string = qr.target_url ?? "";
     const mode = qr.routing_mode ?? "single";
 
     if (dests.length > 0 && mode !== "single") {
