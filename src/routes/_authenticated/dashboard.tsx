@@ -67,23 +67,37 @@ function ensureHttps(v: string) {
 function isValidUrl(v: string) { try { new URL(v); return true; } catch { return false; } }
 function stripAt(v: string) { return v.trim().replace(/^@+/, ""); }
 
-function buildUrl(type: LinkType, raw: string): string | null {
+type Extras = { message?: string; subject?: string; body?: string; amount?: string; note?: string };
+
+function buildUrl(type: LinkType, raw: string, extras: Extras = {}): string | null {
   const v = raw.trim();
   if (!v) return null;
   switch (type) {
     case "whatsapp": {
       const d = digits(v);
-      return d.length >= 6 ? `https://wa.me/${d}` : null;
+      if (d.length < 6) return null;
+      const msg = extras.message?.trim();
+      return `https://wa.me/${d}${msg ? `?text=${encodeURIComponent(msg)}` : ""}`;
     }
     case "phone": {
       const d = digits(v);
       return d.length >= 4 ? `tel:${v.startsWith("+") ? "+" : ""}${d}` : null;
     }
     case "email": {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? `mailto:${v}` : null;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return null;
+      const params = new URLSearchParams();
+      if (extras.subject?.trim()) params.set("subject", extras.subject.trim());
+      if (extras.body?.trim()) params.set("body", extras.body.trim());
+      const q = params.toString();
+      return `mailto:${v}${q ? `?${q}` : ""}`;
     }
     case "upi": {
-      return /^[\w.\-]+@[\w.\-]+$/.test(v) ? `upi://pay?pa=${encodeURIComponent(v)}` : null;
+      if (!/^[\w.\-]+@[\w.\-]+$/.test(v)) return null;
+      const params = new URLSearchParams({ pa: v });
+      if (extras.note?.trim()) params.set("tn", extras.note.trim());
+      if (extras.amount?.trim() && !isNaN(Number(extras.amount))) params.set("am", extras.amount.trim());
+      params.set("cu", "INR");
+      return `upi://pay?${params.toString()}`;
     }
     case "instagram": {
       if (/^https?:\/\//i.test(v)) return isValidUrl(v) ? v : null;
@@ -115,6 +129,7 @@ function buildUrl(type: LinkType, raw: string): string | null {
     }
   }
 }
+
 
 
 function Dashboard() {
@@ -492,24 +507,32 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
   const [weight, setWeight] = useState(1);
   const [device, setDevice] = useState<Destination["device_filter"]>("any");
   const [priority, setPriority] = useState(0);
-  const [linkType, setLinkType] = useState<(typeof LINK_TYPE_OPTIONS)[number]>("website");
+  const [linkType, setLinkType] = useState<LinkType>("website");
+  const [extras, setExtras] = useState<Extras>({});
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["dests", qr.id] });
 
   const meta = INPUT_META[linkType];
-  const builtUrl = buildUrl(linkType, url);
+  const builtUrl = buildUrl(linkType, url, extras);
   const canAdd = !!builtUrl;
+
+  const mode = qr.routing_mode ?? "single";
+  const hint = ROUTING_MODES.find((m) => m.value === mode)?.hint ?? "";
+  const showWeight = mode === "weighted";
+  const showPriority = mode === "priority";
+  const showDevice = mode === "device";
+
+  const resetForm = () => {
+    setLabel(""); setUrl(""); setWeight(1); setDevice("any"); setPriority(0);
+    setLinkType("website"); setExtras({});
+  };
 
   const add = useMutation({
     mutationFn: () =>
       addDestination({
         data: { qr_id: qr.id, label, target_url: builtUrl!, weight, device_filter: device, priority, link_type: linkType },
       }),
-    onSuccess: () => {
-      toast.success("Destination added");
-      invalidate();
-      setLabel(""); setUrl(""); setWeight(1); setDevice("any"); setPriority(0); setLinkType("website");
-    },
+    onSuccess: () => { toast.success("Destination added"); invalidate(); resetForm(); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
@@ -522,9 +545,6 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
     mutationFn: (d: Destination) => updateDestination({ data: { id: d.id, is_active: !d.is_active } }),
     onSuccess: () => invalidate(),
   });
-
-  const mode = qr.routing_mode ?? "single";
-  const hint = ROUTING_MODES.find((m) => m.value === mode)?.hint ?? "";
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur grid place-items-center p-4">
@@ -541,18 +561,29 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
 
         <div className="mt-5 rounded-xl border border-border p-4">
           <h3 className="text-sm font-medium">Add destination</h3>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="block text-xs text-muted-foreground">Link type (hub icon)
-              <select value={linkType} onChange={(e) => { setLinkType(e.target.value as typeof linkType); setUrl(""); }}
-                className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm capitalize">
-                {LINK_TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </label>
-            <label className="block text-xs text-muted-foreground">Label (optional)
-              <input value={label} onChange={(e) => setLabel(e.target.value)}
-                placeholder="Follow us on Instagram"
-                className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
-            </label>
+
+          {/* Type picker as chips */}
+          <div className="mt-3">
+            <div className="text-xs text-muted-foreground mb-1.5">Link type</div>
+            <div className="flex flex-wrap gap-1.5">
+              {LINK_TYPE_OPTIONS.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setLinkType(t); setUrl(""); setExtras({}); }}
+                  className={`h-7 px-3 rounded-full border text-xs capitalize transition ${
+                    linkType === t
+                      ? "bg-glow text-primary-foreground border-transparent"
+                      : "border-border hover:bg-accent"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <label className="block text-xs text-muted-foreground sm:col-span-2">{meta.label}
               <input value={url} onChange={(e) => setUrl(e.target.value)}
                 inputMode={meta.inputMode}
@@ -563,27 +594,85 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
                 <span className="mt-1 block text-[11px] text-destructive">Enter a valid {meta.label.toLowerCase()}.</span>
               )}
             </label>
-            <label className="block text-xs text-muted-foreground">Weight (weighted mode)
-              <input type="number" min={1} max={100} value={weight}
-                onChange={(e) => setWeight(Number(e.target.value) || 1)}
+
+            {/* Type-specific extras */}
+            {linkType === "whatsapp" && (
+              <label className="block text-xs text-muted-foreground sm:col-span-2">Pre-filled message (optional)
+                <input maxLength={500} value={extras.message ?? ""} onChange={(e) => setExtras({ ...extras, message: e.target.value })}
+                  placeholder="Hi! I saw your QR and…"
+                  className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+              </label>
+            )}
+            {linkType === "email" && (
+              <>
+                <label className="block text-xs text-muted-foreground">Subject (optional)
+                  <input maxLength={150} value={extras.subject ?? ""} onChange={(e) => setExtras({ ...extras, subject: e.target.value })}
+                    placeholder="Enquiry from QR"
+                    className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+                </label>
+                <label className="block text-xs text-muted-foreground">Body (optional)
+                  <input maxLength={500} value={extras.body ?? ""} onChange={(e) => setExtras({ ...extras, body: e.target.value })}
+                    placeholder="Hi, I'd like to know more about…"
+                    className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+                </label>
+              </>
+            )}
+            {linkType === "upi" && (
+              <>
+                <label className="block text-xs text-muted-foreground">Amount ₹ (optional)
+                  <input inputMode="decimal" value={extras.amount ?? ""} onChange={(e) => setExtras({ ...extras, amount: e.target.value.replace(/[^\d.]/g, "") })}
+                    placeholder="199"
+                    className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+                </label>
+                <label className="block text-xs text-muted-foreground">Note (optional)
+                  <input maxLength={80} value={extras.note ?? ""} onChange={(e) => setExtras({ ...extras, note: e.target.value })}
+                    placeholder="Order #1234"
+                    className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+                </label>
+              </>
+            )}
+
+            <label className="block text-xs text-muted-foreground sm:col-span-2">Button label (optional)
+              <input value={label} onChange={(e) => setLabel(e.target.value)}
+                placeholder={`e.g. ${linkType === "whatsapp" ? "Chat on WhatsApp" : linkType === "upi" ? "Pay via UPI" : "Open"}`}
                 className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
             </label>
-            <label className="block text-xs text-muted-foreground">Priority (priority mode)
-              <input type="number" min={0} max={1000} value={priority}
-                onChange={(e) => setPriority(Number(e.target.value) || 0)}
-                className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
-            </label>
-            <label className="block text-xs text-muted-foreground sm:col-span-2">Device (device mode)
-              <select value={device}
-                onChange={(e) => setDevice(e.target.value as Destination["device_filter"])}
-                className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm">
-                <option value="any">Any</option>
-                <option value="mobile">Mobile</option>
-                <option value="tablet">Tablet</option>
-                <option value="desktop">Desktop</option>
-              </select>
-            </label>
+
+            {/* Routing-mode-specific fields */}
+            {showWeight && (
+              <label className="block text-xs text-muted-foreground">Weight
+                <input type="number" min={1} max={100} value={weight}
+                  onChange={(e) => setWeight(Number(e.target.value) || 1)}
+                  className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+              </label>
+            )}
+            {showPriority && (
+              <label className="block text-xs text-muted-foreground">Priority
+                <input type="number" min={0} max={1000} value={priority}
+                  onChange={(e) => setPriority(Number(e.target.value) || 0)}
+                  className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm" />
+              </label>
+            )}
+            {showDevice && (
+              <label className="block text-xs text-muted-foreground sm:col-span-2">Device
+                <select value={device}
+                  onChange={(e) => setDevice(e.target.value as Destination["device_filter"])}
+                  className="mt-1 w-full h-9 px-3 rounded-lg bg-background border border-border text-sm">
+                  <option value="any">Any</option>
+                  <option value="mobile">Mobile</option>
+                  <option value="tablet">Tablet</option>
+                  <option value="desktop">Desktop</option>
+                </select>
+              </label>
+            )}
           </div>
+
+          {builtUrl && (
+            <div className="mt-3 text-[11px] text-muted-foreground truncate">
+              Preview: <span className="text-foreground">{builtUrl}</span>
+            </div>
+          )}
+
           <div className="mt-4 flex justify-end">
             <button
               disabled={add.isPending || !canAdd}
@@ -594,6 +683,7 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
             </button>
           </div>
         </div>
+
 
 
         <h3 className="mt-6 text-sm font-medium">
