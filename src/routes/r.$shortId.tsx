@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import {
   Globe, MessageCircle, Facebook, Instagram, Twitter, Youtube, Linkedin,
   Mail, Phone, MapPin, CreditCard, FileText, Link as LinkIcon, Send,
-  BadgeCheck, Share2, ExternalLink,
+  BadgeCheck, Share2, ExternalLink, Image as ImageIcon, Video as VideoIcon,
 } from "lucide-react";
 import { resolveShortAndTrack } from "@/lib/qr.functions";
 
@@ -39,6 +39,9 @@ const META: Record<string, LinkMeta> = {
   phone:     { icon: Phone,         label: "Call Now",        grad: "from-teal-400 to-emerald-600" },
   maps:      { icon: MapPin,        label: "Get Directions",  grad: "from-lime-400 to-green-600" },
   upi:       { icon: CreditCard,    label: "Pay via UPI",     grad: "from-violet-500 to-purple-700" },
+  image:     { icon: ImageIcon,     label: "View Image",      grad: "from-rose-400 to-pink-600" },
+  video:     { icon: VideoIcon,     label: "Watch Video",     grad: "from-red-500 to-orange-600" },
+  pdf:       { icon: FileText,      label: "Open PDF",        grad: "from-red-600 to-rose-800" },
   file:      { icon: FileText,      label: "Download File",   grad: "from-zinc-500 to-slate-700" },
   link:      { icon: LinkIcon,      label: "Open Link",       grad: "from-neutral-500 to-neutral-800" },
 };
