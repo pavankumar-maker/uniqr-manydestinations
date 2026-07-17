@@ -96,10 +96,10 @@ function Landing() {
 
 
       {/* Features */}
-      <section id="features" className="mx-auto max-w-7xl px-6 py-24">
+      <section id="features" className="mx-auto max-w-7xl px-6 py-16 sm:py-24">
         <div className="max-w-2xl">
           <div className="text-sm font-medium text-accent">Platform capabilities</div>
-          <h2 className="mt-3 text-4xl font-semibold">Everything you need to run QR at scale</h2>
+          <h2 className="mt-3 text-3xl sm:text-4xl font-semibold">Everything you need to run QR at scale</h2>
           <p className="mt-4 text-muted-foreground">
             Purpose-built for teams that need reliability, control and insight from every scan.
           </p>
@@ -119,7 +119,7 @@ function Landing() {
 
       {/* Trusted by */}
       <section className="border-y border-border/60 bg-card/20">
-        <div className="mx-auto max-w-7xl px-6 py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
           <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground text-center">
             Trusted by fast-moving teams worldwide
           </div>
@@ -134,10 +134,10 @@ function Landing() {
       </section>
 
       {/* How it works */}
-      <section className="mx-auto max-w-7xl px-6 py-24">
+      <section className="mx-auto max-w-7xl px-6 py-16 sm:py-24">
         <div className="max-w-2xl">
           <div className="text-sm font-medium text-accent">How it works</div>
-          <h2 className="mt-3 text-4xl font-semibold">Launch a live QR in three steps</h2>
+          <h2 className="mt-3 text-3xl sm:text-4xl font-semibold">Launch a live QR in three steps</h2>
         </div>
         <div className="mt-14 grid md:grid-cols-3 gap-5">
           {[
@@ -174,11 +174,11 @@ function Landing() {
 
       {/* QR Types */}
       <section id="types" className="border-y border-border/60 bg-card/30">
-        <div className="mx-auto max-w-7xl px-6 py-24">
+        <div className="mx-auto max-w-7xl px-6 py-16 sm:py-24">
           <div className="flex items-end justify-between flex-wrap gap-6">
             <div className="max-w-xl">
               <div className="text-sm font-medium text-accent">12+ QR Types</div>
-              <h2 className="mt-3 text-4xl font-semibold">Every use case, one platform</h2>
+              <h2 className="mt-3 text-3xl sm:text-4xl font-semibold">Every use case, one platform</h2>
             </div>
             <Link to="/generator" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
               Try the generator <ArrowRight className="w-4 h-4" />
