@@ -240,13 +240,44 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
     // Load destinations
     const { data: destsRaw } = await supabaseAdmin
       .from("qr_destinations")
-      .select("id, target_url, weight, device_filter, priority, is_active, created_at")
+      .select("id, label, target_url, weight, device_filter, priority, is_active, created_at, link_type")
       .eq("qr_id", qr.id)
       .eq("is_active", true);
     const dests = destsRaw ?? [];
 
     let chosen: string = qr.target_url ?? "";
     const mode = qr.routing_mode ?? "single";
+
+    // Hub mode — render a landing page with all destinations
+    if (mode === "hub") {
+      await supabaseAdmin.from("scan_events").insert({
+        qr_id: qr.id,
+        user_agent: req?.headers.get("user-agent") ?? null,
+        referrer: req?.headers.get("referer") ?? null,
+        device,
+      });
+      const { data: curH } = await supabaseAdmin
+        .from("qr_codes").select("scan_count").eq("id", qr.id).single();
+      if (curH) {
+        await supabaseAdmin.from("qr_codes")
+          .update({ scan_count: (curH.scan_count ?? 0) + 1 }).eq("id", qr.id);
+      }
+      const sorted = [...dests].sort((a, b) => b.priority - a.priority);
+      return {
+        url: null as string | null,
+        hub: {
+          name: qr.name ?? "Links",
+          fg: qr.fg_color ?? "#0B0B12",
+          bg: qr.bg_color ?? "#FFFFFF",
+          links: sorted.map((d) => ({
+            label: d.label || d.link_type || "Open",
+            url: d.target_url,
+            type: d.link_type ?? "link",
+          })),
+        } as Hub,
+      };
+    }
+
 
     if (dests.length > 0 && mode !== "single") {
       if (mode === "device") {
