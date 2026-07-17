@@ -41,6 +41,8 @@ export type Database = {
           is_active: boolean
           is_dynamic: boolean
           name: string
+          rotation_cursor: number
+          routing_mode: string
           scan_count: number
           short_id: string
           target_url: string
@@ -55,6 +57,8 @@ export type Database = {
           is_active?: boolean
           is_dynamic?: boolean
           name: string
+          rotation_cursor?: number
+          routing_mode?: string
           scan_count?: number
           short_id: string
           target_url: string
@@ -69,6 +73,8 @@ export type Database = {
           is_active?: boolean
           is_dynamic?: boolean
           name?: string
+          rotation_cursor?: number
+          routing_mode?: string
           scan_count?: number
           short_id?: string
           target_url?: string
@@ -76,6 +82,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      qr_destinations: {
+        Row: {
+          created_at: string
+          device_filter: string
+          id: string
+          is_active: boolean
+          label: string
+          priority: number
+          qr_id: string
+          target_url: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          device_filter?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          priority?: number
+          qr_id: string
+          target_url: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          device_filter?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          priority?: number
+          qr_id?: string
+          target_url?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_destinations_qr_id_fkey"
+            columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scan_events: {
         Row: {
