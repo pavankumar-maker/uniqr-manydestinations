@@ -1451,6 +1451,117 @@ function StaticQrModal({ onClose }: { onClose: () => void }) {
                 </label>
               </div>
             )}
+            {kind === "whatsapp" && (
+              <>
+                <label className={labelCls}>WhatsApp number (with country code)
+                  <input value={whatsapp.number} onChange={(e) => setWhatsapp({ ...whatsapp, number: e.target.value })} placeholder="+91 98765 43210" className={inputCls} />
+                </label>
+                <label className={labelCls}>Pre-filled message (optional)
+                  <textarea value={whatsapp.message} onChange={(e) => setWhatsapp({ ...whatsapp, message: e.target.value })} rows={3} className={`${inputCls} h-auto py-2`} />
+                </label>
+              </>
+            )}
+            {kind === "maps" && (
+              <>
+                <label className={labelCls}>Place / address
+                  <input value={maps.query} onChange={(e) => setMaps({ ...maps, query: e.target.value })} placeholder="e.g. Gateway of India, Mumbai" className={inputCls} />
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className={labelCls}>Latitude (optional)
+                    <input value={maps.lat} onChange={(e) => setMaps({ ...maps, lat: e.target.value })} className={inputCls} />
+                  </label>
+                  <label className={labelCls}>Longitude (optional)
+                    <input value={maps.lng} onChange={(e) => setMaps({ ...maps, lng: e.target.value })} className={inputCls} />
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!navigator.geolocation) { toast.error("Geolocation not supported"); return; }
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => setMaps({ query: "", lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) }),
+                      () => toast.error("Could not fetch location")
+                    );
+                  }}
+                  className="h-9 px-3 rounded-lg border border-border text-xs hover:bg-accent"
+                >
+                  Use my current location
+                </button>
+              </>
+            )}
+            {(kind === "image" || kind === "video" || kind === "pdf") && (
+              <>
+                <label className={labelCls}>File URL
+                  <input value={fileUrl} onChange={(e) => setFileUrl(e.target.value)} placeholder="https://…" className={inputCls} />
+                </label>
+                <FileUploader accept={kind} onUploaded={(u) => setFileUrl(u)} />
+                <p className="text-[11px] text-muted-foreground">
+                  The file URL is baked into the QR. Deleting the file later will break the QR — keep it hosted.
+                </p>
+              </>
+            )}
+            {kind === "links" && (
+              <>
+                <label className={labelCls}>Title
+                  <input value={links.title} onChange={(e) => setLinks({ ...links, title: e.target.value })} placeholder="My links" className={inputCls} />
+                </label>
+                <label className={labelCls}>Subtitle
+                  <input value={links.subtitle} onChange={(e) => setLinks({ ...links, subtitle: e.target.value })} className={inputCls} />
+                </label>
+                <div className="space-y-2">
+                  {links.items.map((it, idx) => (
+                    <div key={idx} className="grid grid-cols-[7rem_1fr_1fr_auto] gap-2 items-start">
+                      <select
+                        value={it.type}
+                        onChange={(e) => {
+                          const items = [...links.items]; items[idx] = { ...it, type: e.target.value }; setLinks({ ...links, items });
+                        }}
+                        className={inputCls}
+                      >
+                        <option value="website">Website</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="phone">Phone</option>
+                        <option value="email">Email</option>
+                        <option value="maps">Maps</option>
+                        <option value="image">Image</option>
+                        <option value="video">Video</option>
+                        <option value="pdf">PDF</option>
+                      </select>
+                      <input
+                        value={it.label}
+                        onChange={(e) => { const items = [...links.items]; items[idx] = { ...it, label: e.target.value }; setLinks({ ...links, items }); }}
+                        placeholder="Label" className={inputCls}
+                      />
+                      <input
+                        value={it.url}
+                        onChange={(e) => { const items = [...links.items]; items[idx] = { ...it, url: e.target.value }; setLinks({ ...links, items }); }}
+                        placeholder="URL" className={inputCls}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setLinks({ ...links, items: links.items.filter((_, i) => i !== idx) })}
+                        className="h-10 w-10 grid place-items-center rounded-lg border border-border hover:bg-accent"
+                        aria-label="Remove"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setLinks({ ...links, items: [...links.items, { label: "", url: "https://", type: "website" }] })}
+                    className="h-9 px-3 rounded-lg border border-border text-xs hover:bg-accent"
+                  >
+                    + Add link
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Encoded directly into a hosted static hub page. Links are fixed once the QR is printed.
+                </p>
+              </>
+            )}
+
+
 
             <div className="grid grid-cols-3 gap-3 pt-2">
               <label className={labelCls}>Foreground
