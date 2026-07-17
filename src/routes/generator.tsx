@@ -1,0 +1,301 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useRef, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
+import QRCode from "qrcode";
+import { Download, Globe, MessageSquare, Phone, Mail, MapPin, CreditCard, Wifi, Type } from "lucide-react";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+
+export const Route = createFileRoute("/generator")({
+  head: () => ({
+    meta: [
+      { title: "QR Generator — NxtQR" },
+      { name: "description", content: "Free QR code generator. Create Website, WhatsApp, UPI, WiFi, vCard and more with full customization." },
+      { property: "og:title", content: "QR Generator — NxtQR" },
+      { property: "og:description", content: "Generate customizable QR codes in seconds." },
+    ],
+  }),
+  component: Generator,
+});
+
+type QRType = "url" | "text" | "whatsapp" | "phone" | "email" | "sms" | "maps" | "upi" | "wifi";
+
+const types: { key: QRType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "url", label: "Website", icon: Globe },
+  { key: "text", label: "Text", icon: Type },
+  { key: "whatsapp", label: "WhatsApp", icon: MessageSquare },
+  { key: "phone", label: "Phone", icon: Phone },
+  { key: "email", label: "Email", icon: Mail },
+  { key: "sms", label: "SMS", icon: MessageSquare },
+  { key: "maps", label: "Maps", icon: MapPin },
+  { key: "upi", label: "UPI", icon: CreditCard },
+  { key: "wifi", label: "WiFi", icon: Wifi },
+];
+
+function Generator() {
+  const [type, setType] = useState<QRType>("url");
+  const [fields, setFields] = useState<Record<string, string>>({ url: "https://nxtqr.app" });
+  const [fg, setFg] = useState("#0b0b12");
+  const [bg, setBg] = useState("#ffffff");
+  const [size, setSize] = useState(280);
+  const [level, setLevel] = useState<"L" | "M" | "Q" | "H">("H");
+  const svgWrapRef = useRef<HTMLDivElement>(null);
+
+  const value = useMemo(() => buildValue(type, fields), [type, fields]);
+
+  function update(k: string, v: string) {
+    setFields((f) => ({ ...f, [k]: v }));
+  }
+
+  function switchType(t: QRType) {
+    setType(t);
+    setFields(defaultsFor(t));
+  }
+
+  async function downloadPNG() {
+    const dataUrl = await QRCode.toDataURL(value || " ", {
+      errorCorrectionLevel: level, margin: 2, width: 1024,
+      color: { dark: fg, light: bg },
+    });
+    triggerDownload(dataUrl, "qr.png");
+  }
+
+  function downloadSVG() {
+    const svg = svgWrapRef.current?.querySelector("svg");
+    if (!svg) return;
+    const source = new XMLSerializer().serializeToString(svg);
+    const url = URL.createObjectURL(new Blob([source], { type: "image/svg+xml" }));
+    triggerDownload(url, "qr.svg");
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+      <section className="bg-hero border-b border-border/60">
+        <div className="mx-auto max-w-7xl px-6 py-14">
+          <div className="text-sm text-accent font-medium">Generator</div>
+          <h1 className="mt-2 text-4xl md:text-5xl font-semibold">Create your QR in seconds</h1>
+          <p className="mt-3 text-muted-foreground max-w-xl">Pick a type, fill the details, customize, and download.</p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 py-12 grid lg:grid-cols-[1fr_420px] gap-8">
+        {/* Left */}
+        <div className="space-y-8">
+          {/* Type selector */}
+          <div>
+            <div className="text-sm font-medium mb-3">QR Type</div>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              {types.map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => switchType(key)}
+                  className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border text-xs transition ${
+                    type === key ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Fields */}
+          <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+            <div className="text-sm font-medium">Content</div>
+            <FieldsFor type={type} fields={fields} onChange={update} />
+          </div>
+
+          {/* Customization */}
+          <div className="rounded-2xl border border-border bg-card p-6 grid sm:grid-cols-2 gap-5">
+            <div className="col-span-full text-sm font-medium">Design</div>
+            <ColorInput label="Foreground" value={fg} onChange={setFg} />
+            <ColorInput label="Background" value={bg} onChange={setBg} />
+            <div>
+              <label className="text-xs text-muted-foreground">Size ({size}px)</label>
+              <input type="range" min={160} max={400} value={size} onChange={(e) => setSize(+e.target.value)}
+                className="w-full accent-[var(--primary)]" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Error correction</label>
+              <select value={level} onChange={(e) => setLevel(e.target.value as typeof level)}
+                className="mt-1 w-full h-10 px-3 rounded-lg bg-input border border-border text-sm">
+                <option value="L">L — Low (7%)</option>
+                <option value="M">M — Medium (15%)</option>
+                <option value="Q">Q — Quartile (25%)</option>
+                <option value="H">H — High (30%)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Right - preview */}
+        <div className="lg:sticky lg:top-24 h-fit">
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <div className="text-sm font-medium mb-4">Preview</div>
+            <div ref={svgWrapRef} className="grid place-items-center rounded-xl p-6" style={{ backgroundColor: bg }}>
+              <QRCodeSVG value={value || " "} size={size} level={level} fgColor={fg} bgColor={bg} />
+            </div>
+            <div className="mt-3 text-xs font-mono text-muted-foreground truncate">
+              {value.split("\n")[0] || "—"}
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button onClick={downloadPNG}
+                className="inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-glow text-primary-foreground font-medium shadow-brand hover:opacity-90 transition">
+                <Download className="w-4 h-4" /> PNG
+              </button>
+              <button onClick={downloadSVG}
+                className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border hover:bg-secondary transition">
+                <Download className="w-4 h-4" /> SVG
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <SiteFooter />
+    </div>
+  );
+}
+
+function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="text-xs text-muted-foreground">{label}</label>
+      <div className="mt-1 flex items-center gap-2">
+        <input type="color" value={value} onChange={(e) => onChange(e.target.value)}
+          className="h-10 w-12 rounded-lg bg-input border border-border cursor-pointer" />
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)}
+          className="h-10 flex-1 px-3 rounded-lg bg-input border border-border text-sm font-mono" />
+      </div>
+    </div>
+  );
+}
+
+function Input({ label, value, onChange, placeholder, type = "text" }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
+}) {
+  return (
+    <div>
+      <label className="text-xs text-muted-foreground">{label}</label>
+      <input type={type} value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+        className="mt-1 w-full h-10 px-3 rounded-lg bg-input border border-border text-sm" />
+    </div>
+  );
+}
+
+function FieldsFor({ type, fields, onChange }: { type: QRType; fields: Record<string, string>; onChange: (k: string, v: string) => void }) {
+  switch (type) {
+    case "url":
+      return <Input label="Website URL" value={fields.url} onChange={(v) => onChange("url", v)} placeholder="https://example.com" />;
+    case "text":
+      return (
+        <div>
+          <label className="text-xs text-muted-foreground">Text</label>
+          <textarea value={fields.text ?? ""} onChange={(e) => onChange("text", e.target.value)}
+            rows={4} className="mt-1 w-full p-3 rounded-lg bg-input border border-border text-sm" placeholder="Any text..." />
+        </div>
+      );
+    case "whatsapp":
+      return (
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input label="Phone (with country)" value={fields.phone} onChange={(v) => onChange("phone", v)} placeholder="919999999999" />
+          <Input label="Message" value={fields.msg} onChange={(v) => onChange("msg", v)} placeholder="Hello!" />
+        </div>
+      );
+    case "phone":
+      return <Input label="Phone number" value={fields.phone} onChange={(v) => onChange("phone", v)} placeholder="+91 99999 99999" />;
+    case "email":
+      return (
+        <div className="grid gap-4">
+          <Input label="Email" value={fields.email} onChange={(v) => onChange("email", v)} placeholder="hello@nxtqr.app" />
+          <Input label="Subject" value={fields.subject} onChange={(v) => onChange("subject", v)} />
+          <Input label="Body" value={fields.body} onChange={(v) => onChange("body", v)} />
+        </div>
+      );
+    case "sms":
+      return (
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input label="Phone" value={fields.phone} onChange={(v) => onChange("phone", v)} />
+          <Input label="Message" value={fields.msg} onChange={(v) => onChange("msg", v)} />
+        </div>
+      );
+    case "maps":
+      return (
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input label="Latitude" value={fields.lat} onChange={(v) => onChange("lat", v)} placeholder="12.9716" />
+          <Input label="Longitude" value={fields.lng} onChange={(v) => onChange("lng", v)} placeholder="77.5946" />
+        </div>
+      );
+    case "upi":
+      return (
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input label="UPI ID" value={fields.pa} onChange={(v) => onChange("pa", v)} placeholder="name@bank" />
+          <Input label="Payee name" value={fields.pn} onChange={(v) => onChange("pn", v)} />
+          <Input label="Amount (optional)" value={fields.am} onChange={(v) => onChange("am", v)} />
+          <Input label="Note (optional)" value={fields.tn} onChange={(v) => onChange("tn", v)} />
+        </div>
+      );
+    case "wifi":
+      return (
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input label="Network (SSID)" value={fields.ssid} onChange={(v) => onChange("ssid", v)} />
+          <Input label="Password" value={fields.password} onChange={(v) => onChange("password", v)} />
+          <div>
+            <label className="text-xs text-muted-foreground">Encryption</label>
+            <select value={fields.enc ?? "WPA"} onChange={(e) => onChange("enc", e.target.value)}
+              className="mt-1 w-full h-10 px-3 rounded-lg bg-input border border-border text-sm">
+              <option value="WPA">WPA / WPA2</option>
+              <option value="WEP">WEP</option>
+              <option value="nopass">None</option>
+            </select>
+          </div>
+        </div>
+      );
+  }
+}
+
+function defaultsFor(t: QRType): Record<string, string> {
+  switch (t) {
+    case "url": return { url: "https://nxtqr.app" };
+    case "text": return { text: "Hello from NxtQR" };
+    case "whatsapp": return { phone: "919999999999", msg: "Hi!" };
+    case "phone": return { phone: "+919999999999" };
+    case "email": return { email: "hello@nxtqr.app", subject: "", body: "" };
+    case "sms": return { phone: "+919999999999", msg: "" };
+    case "maps": return { lat: "12.9716", lng: "77.5946" };
+    case "upi": return { pa: "demo@upi", pn: "NxtQR", am: "", tn: "" };
+    case "wifi": return { ssid: "MyWiFi", password: "", enc: "WPA" };
+  }
+}
+
+function buildValue(t: QRType, f: Record<string, string>): string {
+  const enc = encodeURIComponent;
+  switch (t) {
+    case "url": return f.url || "";
+    case "text": return f.text || "";
+    case "whatsapp": return `https://wa.me/${(f.phone || "").replace(/\D/g, "")}${f.msg ? `?text=${enc(f.msg)}` : ""}`;
+    case "phone": return `tel:${f.phone || ""}`;
+    case "email": return `mailto:${f.email || ""}?subject=${enc(f.subject || "")}&body=${enc(f.body || "")}`;
+    case "sms": return `sms:${f.phone || ""}${f.msg ? `?body=${enc(f.msg)}` : ""}`;
+    case "maps": return `https://maps.google.com/?q=${f.lat || 0},${f.lng || 0}`;
+    case "upi": {
+      const p = new URLSearchParams();
+      if (f.pa) p.set("pa", f.pa);
+      if (f.pn) p.set("pn", f.pn);
+      if (f.am) p.set("am", f.am);
+      if (f.tn) p.set("tn", f.tn);
+      p.set("cu", "INR");
+      return `upi://pay?${p.toString()}`;
+    }
+    case "wifi": return `WIFI:T:${f.enc || "WPA"};S:${f.ssid || ""};P:${f.password || ""};;`;
+  }
+}
+
+function triggerDownload(href: string, filename: string) {
+  const a = document.createElement("a");
+  a.href = href; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+}
