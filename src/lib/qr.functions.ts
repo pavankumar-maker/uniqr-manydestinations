@@ -329,5 +329,5 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
         .eq("id", qr.id);
     }
 
-    return { url: chosen };
+    return { url: chosen, hub: null as Hub };
   });
