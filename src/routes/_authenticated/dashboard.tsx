@@ -1202,7 +1202,13 @@ function FileUploader({ accept, onUploaded }: { accept: "image" | "video" | "pdf
   );
 }
 
-type StaticKind = "url" | "text" | "wifi" | "vcard" | "email" | "phone" | "sms" | "upi";
+type StaticKind = "url" | "text" | "wifi" | "vcard" | "email" | "phone" | "sms" | "upi" | "whatsapp" | "maps" | "image" | "video" | "pdf" | "links";
+type LinkItem = { label: string; url: string; type: string };
+
+function b64urlEncode(s: string) {
+  const b = btoa(unescape(encodeURIComponent(s)));
+  return b.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
 
 function StaticQrModal({ onClose }: { onClose: () => void }) {
   const [kind, setKind] = useState<StaticKind>("url");
