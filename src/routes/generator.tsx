@@ -231,6 +231,53 @@ function Generator() {
             <div className="mt-3 text-xs font-mono text-muted-foreground truncate">
               {value.split("\n")[0] || "—"}
             </div>
+
+            {mode === "dynamic" && (
+              <div className="mt-5 rounded-xl border border-border bg-background/50 p-4 space-y-3">
+                {!shortUrl ? (
+                  <>
+                    <div>
+                      <label className="text-xs text-muted-foreground">QR name</label>
+                      <input value={name} onChange={(e) => setName(e.target.value)}
+                        className="mt-1 w-full h-10 px-3 rounded-lg bg-input border border-border text-sm"
+                        placeholder="Campaign / label" />
+                    </div>
+                    {signedIn === false ? (
+                      <Link to="/auth"
+                        className="inline-flex w-full items-center justify-center h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand">
+                        Sign in to create dynamic QR
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={createDynamic}
+                        disabled={!canDynamic || creating || signedIn === null}
+                        className="inline-flex w-full items-center justify-center gap-1.5 h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-50"
+                      >
+                        <Zap className="w-4 h-4" /> {creating ? "Creating…" : "Create dynamic QR"}
+                      </button>
+                    )}
+                    {!canDynamic && (
+                      <p className="text-xs text-muted-foreground">Dynamic QR requires an https:// target. This content type isn't a URL.</p>
+                    )}
+                    {err && <p className="text-xs text-destructive">{err}</p>}
+                  </>
+                ) : (
+                  <>
+                    <div className="text-xs text-muted-foreground">Short link (editable in Dashboard)</div>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 truncate text-xs bg-input border border-border rounded-lg px-3 h-10 inline-flex items-center">{shortUrl}</code>
+                      <button onClick={copyShort}
+                        className="h-10 w-10 grid place-items-center rounded-lg border border-border hover:bg-secondary">
+                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <Link to="/dashboard" className="text-xs text-primary underline">Manage in Dashboard →</Link>
+                  </>
+                )}
+              </div>
+            )}
+
+
             <div className="mt-5 grid grid-cols-3 gap-2">
               <button onClick={downloadPNG}
                 className="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand hover:opacity-90 transition">
