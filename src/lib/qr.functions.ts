@@ -15,9 +15,14 @@ const DEVICE_FILTERS = ["any", "mobile", "tablet", "desktop"] as const;
 
 const createSchema = z.object({
   name: z.string().min(1).max(80),
-  target_url: z.string().url().max(2000),
+  target_url: z.string().url().max(2000).optional(),
   fg_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#0B0B12"),
   bg_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#FFFFFF"),
+  file_path: z.string().max(500).optional(),
+  file_mime: z.string().max(120).optional(),
+  file_name: z.string().max(200).optional(),
+}).refine((v) => !!v.target_url || !!v.file_path, {
+  message: "Either target_url or file_path is required",
 });
 
 export const listMyQrs = createServerFn({ method: "GET" })
