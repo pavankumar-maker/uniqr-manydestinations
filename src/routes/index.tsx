@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight, BarChart3, Palette, Shield, Zap, Globe, Smartphone,
   CreditCard, MapPin, FileText, Image as ImageIcon, Video, MessageSquare,
-  Mail, Phone, Link2, Layers, Check,
+  Mail, Phone, Link2, Layers,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
