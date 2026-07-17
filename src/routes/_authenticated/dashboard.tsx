@@ -1284,7 +1284,13 @@ function StaticQrModal({ onClose }: { onClose: () => void }) {
       case "video":
       case "pdf": return fileUrl.trim();
       case "links": {
-        const cleaned = links.items.filter((it) => it.url && it.url !== "https://");
+        const cleaned = links.items
+          .map((it) => {
+            const t = (it.type || "website") as LinkType;
+            const normalized = buildUrl(t, it.url) ?? "";
+            return { ...it, url: normalized };
+          })
+          .filter((it) => it.url && it.url !== "https://");
         if (cleaned.length === 0) return "";
         const payload = { title: links.title || undefined, subtitle: links.subtitle || undefined, items: cleaned };
         return `${origin}/s?d=${b64urlEncode(JSON.stringify(payload))}`;
