@@ -131,26 +131,18 @@ export const resolveShortAndTrack = createServerFn({ method: "GET" })
       referrer: ref,
       device,
     });
-    await supabaseAdmin.rpc; // no-op safeguard
-    await supabaseAdmin
-      .from("qr_codes")
-      .update({ scan_count: 0 }) // placeholder, real increment below
-      .eq("id", qr.id)
-      .then(() => {});
-    // Increment via direct SQL through admin
-    await supabaseAdmin
+    const { data: cur } = await supabaseAdmin
       .from("qr_codes")
       .select("scan_count")
       .eq("id", qr.id)
-      .single()
-      .then(async ({ data: cur }) => {
-        if (cur) {
-          await supabaseAdmin
-            .from("qr_codes")
-            .update({ scan_count: (cur.scan_count ?? 0) + 1 })
-            .eq("id", qr.id);
-        }
-      });
+      .single();
+    if (cur) {
+      await supabaseAdmin
+        .from("qr_codes")
+        .update({ scan_count: (cur.scan_count ?? 0) + 1 })
+        .eq("id", qr.id);
+    }
 
     return { url: qr.target_url };
   });
+
