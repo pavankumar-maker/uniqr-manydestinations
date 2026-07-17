@@ -409,18 +409,19 @@ function DestinationsModal({ qr, onClose }: { qr: Qr; onClose: () => void }) {
   const [weight, setWeight] = useState(1);
   const [device, setDevice] = useState<Destination["device_filter"]>("any");
   const [priority, setPriority] = useState(0);
+  const [linkType, setLinkType] = useState<(typeof LINK_TYPE_OPTIONS)[number]>("website");
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["dests", qr.id] });
 
   const add = useMutation({
     mutationFn: () =>
       addDestination({
-        data: { qr_id: qr.id, label, target_url: url, weight, device_filter: device, priority },
+        data: { qr_id: qr.id, label, target_url: url, weight, device_filter: device, priority, link_type: linkType },
       }),
     onSuccess: () => {
       toast.success("Destination added");
       invalidate();
-      setLabel(""); setUrl("https://"); setWeight(1); setDevice("any"); setPriority(0);
+      setLabel(""); setUrl("https://"); setWeight(1); setDevice("any"); setPriority(0); setLinkType("website");
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
