@@ -146,6 +146,7 @@ export const addDestination = createServerFn({ method: "POST" })
       weight: z.number().int().min(1).max(100).default(1),
       device_filter: z.enum(DEVICE_FILTERS).default("any"),
       priority: z.number().int().min(0).max(1000).default(0),
+      link_type: z.enum(LINK_TYPES).default("link"),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
