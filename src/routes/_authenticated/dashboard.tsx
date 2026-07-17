@@ -244,7 +244,13 @@ function Dashboard() {
               One QR, many destinations. Route by weight, device, priority, or round-robin — edit anytime.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setStaticOpen(true)}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition"
+            >
+              <QrCode className="w-4 h-4" /> Static QR
+            </button>
             <button
               onClick={() => setUploading(true)}
               className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition"
