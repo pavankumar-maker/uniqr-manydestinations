@@ -136,7 +136,7 @@ function Generator() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <SiteHeader />
       <section className="bg-hero border-b border-border/60">
         <div className="mx-auto max-w-7xl px-6 py-14">

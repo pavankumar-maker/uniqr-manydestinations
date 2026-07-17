@@ -69,7 +69,7 @@ function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <header className="border-b border-border/60 bg-background/70 backdrop-blur-xl sticky top-0 z-40">
         <div className="mx-auto max-w-4xl px-6 h-16 flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
