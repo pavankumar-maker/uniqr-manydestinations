@@ -242,20 +242,14 @@ function Generator() {
                         className="mt-1 w-full h-10 px-3 rounded-lg bg-input border border-border text-sm"
                         placeholder="Campaign / label" />
                     </div>
-                    {signedIn === false ? (
-                      <Link to="/auth"
-                        className="inline-flex w-full items-center justify-center h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand">
-                        Sign in to create dynamic QR
-                      </Link>
-                    ) : (
-                      <button
-                        onClick={createDynamic}
-                        disabled={!canDynamic || creating || signedIn === null}
-                        className="inline-flex w-full items-center justify-center gap-1.5 h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-50"
-                      >
-                        <Zap className="w-4 h-4" /> {creating ? "Creating…" : "Create dynamic QR"}
-                      </button>
-                    )}
+                    <button
+                      onClick={createDynamic}
+                      disabled={!canDynamic || creating}
+                      className="inline-flex w-full items-center justify-center gap-1.5 h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-50"
+                    >
+                      <Zap className="w-4 h-4" /> {creating ? "Creating…" : "Create dynamic QR"}
+                    </button>
+
                     {!canDynamic && (
                       <p className="text-xs text-muted-foreground">Dynamic QR requires an https:// target. This content type isn't a URL.</p>
                     )}
