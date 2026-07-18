@@ -246,6 +246,12 @@ function Dashboard() {
           </div>
           <div className="flex flex-wrap gap-2">
             <button
+              onClick={() => setUploading(true)}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition"
+            >
+              <Plus className="w-4 h-4" /> Upload file QR
+            </button>
+            <button
               onClick={() => setStaticOpen(true)}
               className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition"
             >
