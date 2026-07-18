@@ -166,7 +166,7 @@ export const updateDestination = createServerFn({ method: "POST" })
     z.object({
       id: z.string().uuid(),
       label: z.string().max(80).optional(),
-      target_url: z.string().url().max(2000).optional(),
+      target_url: anyUrl.optional(),
       weight: z.number().int().min(1).max(100).optional(),
       device_filter: z.enum(DEVICE_FILTERS).optional(),
       priority: z.number().int().min(0).max(1000).optional(),
