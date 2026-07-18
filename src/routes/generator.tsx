@@ -252,7 +252,9 @@ function Generator() {
                     </button>
 
                     {!canDynamic && (
-                      <p className="text-xs text-muted-foreground">Dynamic QR requires an https:// target. This content type isn't a URL.</p>
+                      <p className="text-xs text-muted-foreground">
+                        Dynamic QR needs a redirectable target. {STATIC_ONLY.includes(type) ? `"${type}" content is device-only and can't be redirected — use Static mode.` : "Fill in the fields above to enable it."}
+                      </p>
                     )}
                     {err && <p className="text-xs text-destructive">{err}</p>}
                   </>
