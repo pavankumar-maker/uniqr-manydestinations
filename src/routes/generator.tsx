@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import QRCode from "qrcode";
@@ -6,7 +6,7 @@ import jsPDF from "jspdf";
 import { Download, Globe, MessageSquare, Phone, Mail, MapPin, CreditCard, Wifi, Type, Contact, Zap, Copy, Check } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { supabase } from "@/integrations/supabase/client";
+
 import { createQr } from "@/lib/qr.functions";
 
 export const Route = createFileRoute("/generator")({
@@ -45,18 +45,13 @@ function Generator() {
   const [size, setSize] = useState(280);
   const [level, setLevel] = useState<"L" | "M" | "Q" | "H">("H");
   const [name, setName] = useState("My QR");
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  
   const [shortUrl, setShortUrl] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const svgWrapRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSignedIn(!!s));
-    return () => sub.subscription.unsubscribe();
-  }, []);
 
   const rawValue = useMemo(() => buildValue(type, fields), [type, fields]);
   const value = mode === "dynamic" && shortUrl ? shortUrl : rawValue;
