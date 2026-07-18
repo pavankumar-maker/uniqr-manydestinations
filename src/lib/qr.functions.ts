@@ -146,7 +146,7 @@ export const addDestination = createServerFn({ method: "POST" })
     z.object({
       qr_id: z.string().uuid(),
       label: z.string().max(80).default(""),
-      target_url: z.string().url().max(2000),
+      target_url: anyUrl,
       weight: z.number().int().min(1).max(100).default(1),
       device_filter: z.enum(DEVICE_FILTERS).default("any"),
       priority: z.number().int().min(0).max(1000).default(0),
