@@ -56,9 +56,10 @@ function Generator() {
   const rawValue = useMemo(() => buildValue(type, fields), [type, fields]);
   const value = mode === "dynamic" && shortUrl ? shortUrl : rawValue;
 
-  // Dynamic mode only supports http(s) targets (real URLs)
-  const isHttp = /^https?:\/\//i.test(rawValue);
-  const canDynamic = isHttp;
+  // Dynamic mode encodes a short link that redirects to any URL-scheme target
+  // (http, tel, mailto, sms, upi, geo). Text / WiFi / vCard aren't redirectable.
+  const STATIC_ONLY: QRType[] = ["text", "wifi", "vcard"];
+  const canDynamic = !STATIC_ONLY.includes(type) && /^(https?|tel|mailto|sms|upi|geo):/i.test(rawValue);
 
   useEffect(() => { setShortUrl(null); setErr(null); }, [rawValue, mode]);
 
@@ -251,7 +252,9 @@ function Generator() {
                     </button>
 
                     {!canDynamic && (
-                      <p className="text-xs text-muted-foreground">Dynamic QR requires an https:// target. This content type isn't a URL.</p>
+                      <p className="text-xs text-muted-foreground">
+                        Dynamic QR needs a redirectable target. {STATIC_ONLY.includes(type) ? `"${type}" content is device-only and can't be redirected — use Static mode.` : "Fill in the fields above to enable it."}
+                      </p>
                     )}
                     {err && <p className="text-xs text-destructive">{err}</p>}
                   </>
