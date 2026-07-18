@@ -77,7 +77,7 @@ export const updateQr = createServerFn({ method: "POST" })
     z.object({
       id: z.string().uuid(),
       name: z.string().min(1).max(80).optional(),
-      target_url: z.string().url().max(2000).optional(),
+      target_url: anyUrl.optional(),
       is_active: z.boolean().optional(),
       fg_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
       bg_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
