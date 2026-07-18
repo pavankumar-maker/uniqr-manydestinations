@@ -454,19 +454,25 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
 function CreateModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const [name, setName] = useState("");
-  const [url, setUrl] = useState("https://");
+  const [url, setUrl] = useState("");
   const [fg, setFg] = useState("#0B0B12");
   const [bg, setBg] = useState("#FFFFFF");
 
+  const validUrl = (() => {
+    const v = url.trim();
+    if (!v) return false;
+    try { const u = new URL(v); return !!u.hostname && u.hostname.includes("."); } catch { return false; }
+  })();
+
   const create = useMutation({
     mutationFn: () =>
-      createQr({ data: { name, target_url: url, fg_color: fg, bg_color: bg } }),
+      createQr({ data: { name: name.trim(), target_url: url.trim(), fg_color: fg, bg_color: bg } }),
     onSuccess: () => {
       toast.success("QR created");
       qc.invalidateQueries({ queryKey: ["qrs"] });
       onClose();
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to create QR"),
   });
 
   return (
@@ -486,6 +492,9 @@ function CreateModal({ onClose }: { onClose: () => void }) {
             <input value={url} onChange={(e) => setUrl(e.target.value)}
               placeholder="https://example.com/menu"
               className="mt-1 w-full h-10 px-3 rounded-lg bg-background border border-border text-sm" />
+            {url.trim() && !validUrl && (
+              <span className="mt-1 block text-[11px] text-destructive">Enter a full URL, e.g. https://example.com</span>
+            )}
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-xs text-muted-foreground">Foreground
@@ -501,7 +510,7 @@ function CreateModal({ onClose }: { onClose: () => void }) {
         <div className="mt-6 flex gap-2 justify-end">
           <button onClick={onClose} className="h-10 px-4 rounded-lg border border-border text-sm">Cancel</button>
           <button
-            disabled={create.isPending || !name || !url.startsWith("http")}
+            disabled={create.isPending || !name.trim() || !validUrl}
             onClick={() => create.mutate()}
             className="h-10 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-60"
           >
