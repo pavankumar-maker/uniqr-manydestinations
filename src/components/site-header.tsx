@@ -1,18 +1,9 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { QrCode, LayoutDashboard, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSignedIn(!!s));
-    return () => sub.subscription.unsubscribe();
-  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
@@ -45,26 +36,12 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3 justify-self-end">
-          {signedIn ? (
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition"
-            >
-              <LayoutDashboard className="w-4 h-4" aria-hidden /> <span className="hidden xs:inline sm:inline">Dashboard</span>
-            </Link>
-          ) : (
-            <>
-              <Link to="/auth" className="hidden sm:inline text-sm text-muted-foreground hover:text-foreground transition">
-                Sign in
-              </Link>
-              <Link
-                to="/auth"
-                className="inline-flex items-center h-10 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition"
-              >
-                Get started
-              </Link>
-            </>
-          )}
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition"
+          >
+            <LayoutDashboard className="w-4 h-4" aria-hidden /> <span className="hidden xs:inline sm:inline">Dashboard</span>
+          </Link>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -85,13 +62,9 @@ export function SiteHeader() {
       >
         <nav aria-label="Mobile" className="mx-auto max-w-7xl px-4 py-4 flex flex-col gap-1 text-sm text-muted-foreground">
           {navLinks}
-          {!signedIn && (
-            <Link to="/auth" onClick={() => setOpen(false)} className="pt-2 mt-1 border-t border-border/60 hover:text-foreground transition">
-              Sign in
-            </Link>
-          )}
         </nav>
       </div>
     </header>
   );
 }
+
