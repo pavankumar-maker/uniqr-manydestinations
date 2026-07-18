@@ -54,8 +54,6 @@ const INPUT_META: Record<LinkType, { label: string; placeholder: string; help?: 
   maps:      { label: "Address or Google Maps URL", placeholder: "221B Baker Street, London" },
   upi:       { label: "UPI ID",          placeholder: "yourname@upi",                help: "Opens the user's UPI app to pay you." },
 };
-  file:      { label: "File URL",        placeholder: "https://…",                   help: "Paste a URL or upload any file.", inputMode: "url", upload: "any" },
-};
 
 function digits(v: string) { return v.replace(/[^\d]/g, ""); }
 function ensureHttps(v: string) {
