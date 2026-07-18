@@ -25,6 +25,7 @@ type Destination = Awaited<ReturnType<typeof listDestinations>>[number];
 
 const ROUTING_MODES: { value: Qr["routing_mode"]; label: string; hint: string }[] = [
   { value: "single", label: "Single destination", hint: "Redirect all scans to the default URL." },
+  { value: "hub", label: "Multi-link hub", hint: "Show a branded page with all destinations." },
   { value: "rotation", label: "Round-robin", hint: "Cycle through destinations in order." },
   { value: "weighted", label: "Weighted A/B", hint: "Random split by weight." },
   { value: "device", label: "By device", hint: "Route by mobile / tablet / desktop." },
@@ -34,6 +35,7 @@ const ROUTING_MODES: { value: Qr["routing_mode"]; label: string; hint: string }[
 const LINK_TYPE_OPTIONS = [
   "link", "website", "whatsapp", "facebook", "instagram", "twitter", "youtube",
   "linkedin", "tiktok", "telegram", "email", "phone", "maps", "upi",
+  "image", "video", "pdf", "file",
 ] as const;
 
 type LinkType = (typeof LINK_TYPE_OPTIONS)[number];
@@ -53,6 +55,10 @@ const INPUT_META: Record<LinkType, { label: string; placeholder: string; help?: 
   phone:     { label: "Phone number",    placeholder: "+91 98765 43210",             inputMode: "tel" },
   maps:      { label: "Address or Google Maps URL", placeholder: "221B Baker Street, London" },
   upi:       { label: "UPI ID",          placeholder: "yourname@upi",                help: "Opens the user's UPI app to pay you." },
+  image:     { label: "Image URL",       placeholder: "https://…/photo.jpg",         help: "Paste a URL or upload below.", inputMode: "url", upload: "image" },
+  video:     { label: "Video URL",       placeholder: "https://…/clip.mp4",          help: "Paste a URL or upload below.", inputMode: "url", upload: "video" },
+  pdf:       { label: "PDF URL",         placeholder: "https://…/document.pdf",      help: "Paste a URL or upload below.", inputMode: "url", upload: "pdf" },
+  file:      { label: "File URL",        placeholder: "https://…/file",              help: "Any file. Paste a URL or upload below.", inputMode: "url", upload: "any" },
 };
 
 function digits(v: string) { return v.replace(/[^\d]/g, ""); }
@@ -239,6 +245,12 @@ function Dashboard() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setUploading(true)}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition"
+            >
+              <Plus className="w-4 h-4" /> Upload file QR
+            </button>
             <button
               onClick={() => setStaticOpen(true)}
               className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition"
@@ -1334,10 +1346,10 @@ function StaticQrModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="mt-4 grid grid-cols-3 sm:grid-cols-5 gap-2">
-          {(["url","text","wifi","vcard","email","phone","sms","upi","whatsapp","maps"] as StaticKind[]).map((k) => (
+          {(["url","text","wifi","vcard","email","phone","sms","upi","whatsapp","maps","image","video","pdf","links"] as StaticKind[]).map((k) => (
             <button key={k} onClick={() => setKind(k)}
               className={`h-9 px-3 rounded-lg border text-xs capitalize ${kind === k ? "border-glow bg-glow/10 text-primary" : "border-border hover:bg-accent"}`}>
-              {k === "url" ? "URL" : k === "upi" ? "UPI" : k === "sms" ? "SMS" : k === "vcard" ? "vCard" : k}
+              {k === "url" ? "URL" : k === "upi" ? "UPI" : k === "sms" ? "SMS" : k === "vcard" ? "vCard" : k === "pdf" ? "PDF" : k === "links" ? "Multi-link" : k}
             </button>
           ))}
         </div>
