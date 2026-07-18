@@ -53,9 +53,7 @@ const INPUT_META: Record<LinkType, { label: string; placeholder: string; help?: 
   phone:     { label: "Phone number",    placeholder: "+91 98765 43210",             inputMode: "tel" },
   maps:      { label: "Address or Google Maps URL", placeholder: "221B Baker Street, London" },
   upi:       { label: "UPI ID",          placeholder: "yourname@upi",                help: "Opens the user's UPI app to pay you." },
-  image:     { label: "Image URL",       placeholder: "https://…/photo.jpg",         help: "Paste an image URL or upload (JPG/PNG/WebP/GIF).", inputMode: "url", upload: "image" },
-  video:     { label: "Video URL",       placeholder: "https://…/clip.mp4 or YouTube link", help: "Paste a video URL or upload (MP4/WebM/MOV).", inputMode: "url", upload: "video" },
-  pdf:       { label: "PDF URL",         placeholder: "https://…/document.pdf",      help: "Paste a PDF URL or upload a PDF file.", inputMode: "url", upload: "pdf" },
+};
   file:      { label: "File URL",        placeholder: "https://…",                   help: "Paste a URL or upload any file.", inputMode: "url", upload: "any" },
 };
 
