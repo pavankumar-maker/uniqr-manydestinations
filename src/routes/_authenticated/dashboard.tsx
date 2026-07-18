@@ -197,10 +197,6 @@ function Dashboard() {
     },
   });
 
-  async function signOut() {
-    await supabase.auth.signOut();
-    navigate({ to: "/" });
-  }
 
   const origin = getPublicQrOrigin();
 
@@ -216,20 +212,12 @@ function Dashboard() {
             <span className="text-xs text-muted-foreground ml-2 hidden sm:inline truncate">/ Dashboard</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="hidden md:inline text-sm text-muted-foreground truncate max-w-[16ch]">{email}</span>
             <Link
               to="/profile"
               className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg border border-border text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition"
             >
               Profile
             </Link>
-            <button
-              onClick={signOut}
-              aria-label="Sign out"
-              className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg border border-border text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition"
-            >
-              <LogOut className="w-4 h-4" aria-hidden /> <span className="hidden sm:inline">Sign out</span>
-            </button>
           </div>
         </div>
       </header>

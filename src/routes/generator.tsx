@@ -6,7 +6,7 @@ import jsPDF from "jspdf";
 import { Download, Globe, MessageSquare, Phone, Mail, MapPin, CreditCard, Wifi, Type, Contact, Zap, Copy, Check } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { supabase } from "@/integrations/supabase/client";
+
 import { createQr } from "@/lib/qr.functions";
 
 export const Route = createFileRoute("/generator")({
@@ -45,18 +45,13 @@ function Generator() {
   const [size, setSize] = useState(280);
   const [level, setLevel] = useState<"L" | "M" | "Q" | "H">("H");
   const [name, setName] = useState("My QR");
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  
   const [shortUrl, setShortUrl] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const svgWrapRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSignedIn(!!s));
-    return () => sub.subscription.unsubscribe();
-  }, []);
 
   const rawValue = useMemo(() => buildValue(type, fields), [type, fields]);
   const value = mode === "dynamic" && shortUrl ? shortUrl : rawValue;
@@ -242,20 +237,14 @@ function Generator() {
                         className="mt-1 w-full h-10 px-3 rounded-lg bg-input border border-border text-sm"
                         placeholder="Campaign / label" />
                     </div>
-                    {signedIn === false ? (
-                      <Link to="/auth"
-                        className="inline-flex w-full items-center justify-center h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand">
-                        Sign in to create dynamic QR
-                      </Link>
-                    ) : (
-                      <button
-                        onClick={createDynamic}
-                        disabled={!canDynamic || creating || signedIn === null}
-                        className="inline-flex w-full items-center justify-center gap-1.5 h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-50"
-                      >
-                        <Zap className="w-4 h-4" /> {creating ? "Creating…" : "Create dynamic QR"}
-                      </button>
-                    )}
+                    <button
+                      onClick={createDynamic}
+                      disabled={!canDynamic || creating}
+                      className="inline-flex w-full items-center justify-center gap-1.5 h-11 rounded-xl bg-glow text-primary-foreground text-sm font-medium shadow-brand disabled:opacity-50"
+                    >
+                      <Zap className="w-4 h-4" /> {creating ? "Creating…" : "Create dynamic QR"}
+                    </button>
+
                     {!canDynamic && (
                       <p className="text-xs text-muted-foreground">Dynamic QR requires an https:// target. This content type isn't a URL.</p>
                     )}
