@@ -5,6 +5,16 @@ import { lovable } from "@/integrations/lovable/index";
 import { QrCode } from "lucide-react";
 import { toast } from "sonner";
 
+const AUTH_CALLBACK_ORIGIN = "https://doc-to-pro-hub.lovable.app";
+
+function getAuthCallbackUrl() {
+  if (window.location.hostname.endsWith(".vercel.app")) {
+    return `${AUTH_CALLBACK_ORIGIN}/auth/callback`;
+  }
+
+  return `${window.location.origin}/auth/callback`;
+}
+
 export const Route = createFileRoute("/auth/")({
   head: () => ({
     meta: [{ title: "Sign in — UniQR" }, { name: "robots", content: "noindex" }],
@@ -35,7 +45,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: getAuthCallbackUrl(),
             data: { display_name: name || email.split("@")[0] },
           },
         });
@@ -55,7 +65,7 @@ function AuthPage() {
 
   async function onGoogle() {
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/auth/callback`,
+      redirect_uri: getAuthCallbackUrl(),
     });
     if (result.error) {
       toast.error("Google sign-in failed");
