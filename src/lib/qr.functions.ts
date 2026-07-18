@@ -14,9 +14,13 @@ const ROUTING_MODES = ["single", "rotation", "weighted", "device", "priority", "
 const DEVICE_FILTERS = ["any", "mobile", "tablet", "desktop"] as const;
 const LINK_TYPES = ["link", "website", "whatsapp", "facebook", "instagram", "twitter", "youtube", "linkedin", "tiktok", "telegram", "email", "phone", "maps", "upi", "file", "image", "video", "pdf"] as const;
 
+const anyUrl = z.string().max(2000).refine((s) => {
+  try { new URL(s); return true; } catch { return false; }
+}, { message: "Invalid url" });
+
 const createSchema = z.object({
   name: z.string().min(1).max(80),
-  target_url: z.string().url().max(2000).optional(),
+  target_url: anyUrl.optional(),
   fg_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#0B0B12"),
   bg_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#FFFFFF"),
   file_path: z.string().max(500).optional(),
