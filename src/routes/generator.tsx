@@ -78,7 +78,12 @@ function Generator() {
     setCreating(true);
     try {
       const row = await createQr({ data: { name: name || "My QR", target_url: rawValue, fg_color: fg, bg_color: bg } });
-      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const PUBLISHED = "https://doc-to-pro-hub.lovable.app";
+      let origin = PUBLISHED;
+      if (typeof window !== "undefined") {
+        const { origin: o, hostname } = window.location;
+        origin = hostname === "localhost" || hostname.endsWith(".lovableproject.com") || hostname.includes("preview--") ? PUBLISHED : o;
+      }
       setShortUrl(`${origin}/r/${(row as { short_id: string }).short_id}`);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Failed to create dynamic QR");
