@@ -25,7 +25,6 @@ type Destination = Awaited<ReturnType<typeof listDestinations>>[number];
 
 const ROUTING_MODES: { value: Qr["routing_mode"]; label: string; hint: string }[] = [
   { value: "single", label: "Single destination", hint: "Redirect all scans to the default URL." },
-  { value: "hub", label: "Multi-link hub", hint: "Show a landing page with all destinations as buttons (Website, WhatsApp, Facebook, etc.)." },
   { value: "rotation", label: "Round-robin", hint: "Cycle through destinations in order." },
   { value: "weighted", label: "Weighted A/B", hint: "Random split by weight." },
   { value: "device", label: "By device", hint: "Route by mobile / tablet / desktop." },
@@ -35,7 +34,6 @@ const ROUTING_MODES: { value: Qr["routing_mode"]; label: string; hint: string }[
 const LINK_TYPE_OPTIONS = [
   "link", "website", "whatsapp", "facebook", "instagram", "twitter", "youtube",
   "linkedin", "tiktok", "telegram", "email", "phone", "maps", "upi",
-  "image", "video", "pdf", "file",
 ] as const;
 
 type LinkType = (typeof LINK_TYPE_OPTIONS)[number];
