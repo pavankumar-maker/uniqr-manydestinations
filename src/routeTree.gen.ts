@@ -14,7 +14,9 @@ import { Route as GeneratorRouteImport } from './routes/generator'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthIndexRouteImport } from './routes/auth.index'
 import { Route as RShortIdRouteImport } from './routes/r.$shortId'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as ApiPublicFileSplatRouteImport } from './routes/api/public/file/$'
@@ -43,10 +45,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthIndexRoute = AuthIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthRoute,
+} as any)
 const RShortIdRoute = RShortIdRouteImport.update({
   id: '/r/$shortId',
   path: '/r/$shortId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
@@ -66,34 +78,39 @@ const ApiPublicFileSplatRoute = ApiPublicFileSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/generator': typeof GeneratorRoute
   '/s': typeof SRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/r/$shortId': typeof RShortIdRoute
+  '/auth/': typeof AuthIndexRoute
   '/api/public/file/$': typeof ApiPublicFileSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
   '/generator': typeof GeneratorRoute
   '/s': typeof SRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/r/$shortId': typeof RShortIdRoute
+  '/auth': typeof AuthIndexRoute
   '/api/public/file/$': typeof ApiPublicFileSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/generator': typeof GeneratorRoute
   '/s': typeof SRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/r/$shortId': typeof RShortIdRoute
+  '/auth/': typeof AuthIndexRoute
   '/api/public/file/$': typeof ApiPublicFileSplatRoute
 }
 export interface FileRouteTypes {
@@ -105,17 +122,20 @@ export interface FileRouteTypes {
     | '/s'
     | '/dashboard'
     | '/profile'
+    | '/auth/callback'
     | '/r/$shortId'
+    | '/auth/'
     | '/api/public/file/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth'
     | '/generator'
     | '/s'
     | '/dashboard'
     | '/profile'
+    | '/auth/callback'
     | '/r/$shortId'
+    | '/auth'
     | '/api/public/file/$'
   id:
     | '__root__'
@@ -126,14 +146,16 @@ export interface FileRouteTypes {
     | '/s'
     | '/_authenticated/dashboard'
     | '/_authenticated/profile'
+    | '/auth/callback'
     | '/r/$shortId'
+    | '/auth/'
     | '/api/public/file/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   GeneratorRoute: typeof GeneratorRoute
   SRoute: typeof SRoute
   RShortIdRoute: typeof RShortIdRoute
@@ -177,12 +199,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/': {
+      id: '/auth/'
+      path: '/'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/r/$shortId': {
       id: '/r/$shortId'
       path: '/r/$shortId'
       fullPath: '/r/$shortId'
       preLoaderRoute: typeof RShortIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
@@ -221,10 +257,22 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthIndexRoute: typeof AuthIndexRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+  AuthIndexRoute: AuthIndexRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   GeneratorRoute: GeneratorRoute,
   SRoute: SRoute,
   RShortIdRoute: RShortIdRoute,
