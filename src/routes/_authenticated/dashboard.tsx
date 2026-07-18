@@ -1346,10 +1346,10 @@ function StaticQrModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="mt-4 grid grid-cols-3 sm:grid-cols-5 gap-2">
-          {(["url","text","wifi","vcard","email","phone","sms","upi","whatsapp","maps"] as StaticKind[]).map((k) => (
+          {(["url","text","wifi","vcard","email","phone","sms","upi","whatsapp","maps","image","video","pdf","links"] as StaticKind[]).map((k) => (
             <button key={k} onClick={() => setKind(k)}
               className={`h-9 px-3 rounded-lg border text-xs capitalize ${kind === k ? "border-glow bg-glow/10 text-primary" : "border-border hover:bg-accent"}`}>
-              {k === "url" ? "URL" : k === "upi" ? "UPI" : k === "sms" ? "SMS" : k === "vcard" ? "vCard" : k}
+              {k === "url" ? "URL" : k === "upi" ? "UPI" : k === "sms" ? "SMS" : k === "vcard" ? "vCard" : k === "pdf" ? "PDF" : k === "links" ? "Multi-link" : k}
             </button>
           ))}
         </div>
