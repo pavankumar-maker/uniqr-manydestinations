@@ -246,12 +246,6 @@ function Dashboard() {
               <QrCode className="w-4 h-4" /> Static QR
             </button>
             <button
-              onClick={() => setUploading(true)}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition"
-            >
-              <Upload className="w-4 h-4" /> Upload file QR
-            </button>
-            <button
               onClick={() => setCreating(true)}
               className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-glow text-primary-foreground text-sm font-medium shadow-brand hover:opacity-90 transition"
             >
