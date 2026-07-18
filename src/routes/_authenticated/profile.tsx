@@ -63,10 +63,6 @@ function ProfilePage() {
     toast.success("Password updated");
   }
 
-  async function signOut() {
-    await supabase.auth.signOut();
-    navigate({ to: "/" });
-  }
 
   return (
     <div className="min-h-dvh bg-background">
@@ -169,19 +165,13 @@ function ProfilePage() {
           <StatCard label="Total scans" value={stats?.totalScans ?? 0} />
         </section>
 
-        <section className="rounded-2xl border border-border bg-card p-6 flex flex-wrap items-center justify-between gap-3">
+        <section className="rounded-2xl border border-border bg-card p-6">
           <div>
             <div className="text-sm font-medium">Account</div>
             <div className="text-xs text-muted-foreground mt-0.5">
               Member since {createdAt ? new Date(createdAt).toLocaleDateString() : "—"}
             </div>
           </div>
-          <button
-            onClick={signOut}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-sm hover:bg-destructive/10 hover:text-destructive transition"
-          >
-            <LogOut className="w-4 h-4" /> Sign out
-          </button>
         </section>
       </main>
     </div>
