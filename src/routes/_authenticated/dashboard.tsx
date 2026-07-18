@@ -25,6 +25,7 @@ type Destination = Awaited<ReturnType<typeof listDestinations>>[number];
 
 const ROUTING_MODES: { value: Qr["routing_mode"]; label: string; hint: string }[] = [
   { value: "single", label: "Single destination", hint: "Redirect all scans to the default URL." },
+  { value: "hub", label: "Multi-link hub", hint: "Show a branded page with all destinations." },
   { value: "rotation", label: "Round-robin", hint: "Cycle through destinations in order." },
   { value: "weighted", label: "Weighted A/B", hint: "Random split by weight." },
   { value: "device", label: "By device", hint: "Route by mobile / tablet / desktop." },
@@ -34,6 +35,7 @@ const ROUTING_MODES: { value: Qr["routing_mode"]; label: string; hint: string }[
 const LINK_TYPE_OPTIONS = [
   "link", "website", "whatsapp", "facebook", "instagram", "twitter", "youtube",
   "linkedin", "tiktok", "telegram", "email", "phone", "maps", "upi",
+  "image", "video", "pdf", "file",
 ] as const;
 
 type LinkType = (typeof LINK_TYPE_OPTIONS)[number];
@@ -53,6 +55,10 @@ const INPUT_META: Record<LinkType, { label: string; placeholder: string; help?: 
   phone:     { label: "Phone number",    placeholder: "+91 98765 43210",             inputMode: "tel" },
   maps:      { label: "Address or Google Maps URL", placeholder: "221B Baker Street, London" },
   upi:       { label: "UPI ID",          placeholder: "yourname@upi",                help: "Opens the user's UPI app to pay you." },
+  image:     { label: "Image URL",       placeholder: "https://…/photo.jpg",         help: "Paste a URL or upload below.", inputMode: "url", upload: "image" },
+  video:     { label: "Video URL",       placeholder: "https://…/clip.mp4",          help: "Paste a URL or upload below.", inputMode: "url", upload: "video" },
+  pdf:       { label: "PDF URL",         placeholder: "https://…/document.pdf",      help: "Paste a URL or upload below.", inputMode: "url", upload: "pdf" },
+  file:      { label: "File URL",        placeholder: "https://…/file",              help: "Any file. Paste a URL or upload below.", inputMode: "url", upload: "any" },
 };
 
 function digits(v: string) { return v.replace(/[^\d]/g, ""); }
