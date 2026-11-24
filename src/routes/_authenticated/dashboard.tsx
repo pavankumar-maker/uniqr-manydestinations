@@ -467,9 +467,13 @@ function CreateModal({ onClose }: { onClose: () => void }) {
   const create = useMutation({
     mutationFn: () =>
       createQr({ data: { name: name.trim(), target_url: url.trim(), fg_color: fg, bg_color: bg } }),
-    onSuccess: () => {
+    onSuccess: async (createdQr) => {
       toast.success("QR created");
-      qc.invalidateQueries({ queryKey: ["qrs"] });
+      qc.setQueryData<Qr[]>(["qrs"], (current = []) => [
+        createdQr,
+        ...current.filter((qr) => qr.id !== createdQr.id),
+      ]);
+      await qc.invalidateQueries({ queryKey: ["qrs"] });
       onClose();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to create QR"),

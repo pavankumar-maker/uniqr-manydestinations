@@ -55,6 +55,7 @@ export const createQr = createServerFn({ method: "POST" })
           name: data.name,
           short_id: short,
           target_url: data.target_url ?? null,
+          routing_mode: "single",
           fg_color: data.fg_color,
           bg_color: data.bg_color,
           is_dynamic: true,
